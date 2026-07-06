@@ -2,7 +2,7 @@
 
 A barebones WordPress plugin that turns your WordPress site into a SAML2 Service Provider (SP), authenticating users against an external Identity Provider (IdP) such as Microsoft Entra ID (Azure AD), Okta, Shibboleth, ADFS, or any SAML2-compliant IdP.
 
-This plugin uses the battle-tested [`onelogin/php-saml`](https://github.com/SAML-Toolkits/php-saml) library for all XML parsing, signature verification, and SAML protocol handling. **This library is not bundled** — you must install it via Composer before activating the plugin.
+This plugin uses the [`onelogin/php-saml`](https://github.com/SAML-Toolkits/php-saml) library for all XML parsing, signature verification, and SAML protocol handling.
 
 ## Features
 
@@ -25,7 +25,6 @@ This plugin uses the battle-tested [`onelogin/php-saml`](https://github.com/SAML
 
    ```bash
    cd wp-content/plugins/edu-saml-sp
-   composer install --no-dev --optimize-autoloader
    ```
 
    This creates a `vendor/` directory containing `onelogin/php-saml` and its own dependencies (`robrichards/xmlseclibs`, etc.). The plugin will refuse to process SAML logins (and will show an admin notice) until this step is completed.
