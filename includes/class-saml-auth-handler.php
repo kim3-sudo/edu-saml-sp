@@ -271,4 +271,70 @@ class EDU_SAML_Auth_Handler {
 		$url = add_query_arg( 'breakglass', '1', wp_login_url() );
 		echo '<p style="text-align:center;margin-top:1em;"><a href="' . esc_url( $url ) . '">' . esc_html__( 'Administrator login', 'edu-saml-sp' ) . '</a></p>';
 	}
+
+	/**
+	 * Enqueue the small stylesheet used by the SSO button on wp-login.php.
+	 */
+	public function enqueue_login_assets() {
+		if ( ! $this->should_show_sso_button() ) {
+			return;
+		}
+		wp_enqueue_style(
+			'edu-saml-sp-login',
+			EDU_SAML_SP_URL . 'assets/login.css',
+			array(),
+			EDU_SAML_SP_VERSION
+		);
+	}
+
+	/**
+	 * Whether the "Sign in with SSO" button should be shown on the current
+	 * wp-login.php request.
+	 *
+	 * @return bool
+	 */
+	private function should_show_sso_button() {
+		if ( edu_saml_sp_library_missing() || ! EDU_SAML_SP::is_configured() ) {
+			return false;
+		}
+
+		// Only show on the actual login form view (not lost-password,
+		// register, resetpass, logout, etc.).
+		$action = isset( $_REQUEST['action'] ) ? sanitize_key( wp_unslash( $_REQUEST['action'] ) ) : 'login';
+		if ( 'login' !== $action ) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Render a "Sign in with your institutional account" SSO button above
+	 * the normal username/password form on wp-login.php.
+	 *
+	 * When Force SSO is enabled, users are already redirected away before
+	 * this ever renders (see maybe_force_sso_redirect()) -- this button
+	 * only appears in the non-forced case, or when the break-glass escape
+	 * hatch query param is present, giving admins a way back to SSO too.
+	 */
+	public function render_sso_button() {
+		if ( ! $this->should_show_sso_button() ) {
+			return;
+		}
+
+		$redirect_to = isset( $_REQUEST['redirect_to'] ) ? wp_unslash( $_REQUEST['redirect_to'] ) : admin_url();
+		$sso_url     = add_query_arg(
+			'redirect_to',
+			rawurlencode( wp_validate_redirect( $redirect_to, admin_url() ) ),
+			EDU_SAML_SP::get_login_url()
+		);
+
+		echo '<div class="edu-saml-sso-wrap">';
+		echo '<a class="button button-primary button-hero edu-saml-sso-button" href="' . esc_url( $sso_url ) . '">';
+		echo esc_html__( 'Sign in with your institutional account', 'edu-saml-sp' );
+		echo '</a>';
+		echo '<div class="edu-saml-sso-divider"><span>' . esc_html__( 'or', 'edu-saml-sp' ) . '</span></div>';
+		echo '</div>';
+	}
 }
+
