@@ -8,6 +8,8 @@
 }
 
 .edu-saml-sso-button.button.button-hero {
+	position: relative;
+	z-index: 1;
 	display: block;
 	width: 100%;
 	text-align: center;
@@ -17,9 +19,14 @@
 
 .edu-saml-sso-divider {
 	position: relative;
+	height: 1px;
+	line-height: 1px;
 	text-align: center;
 	margin: 0 0 20px;
 	border-top: 1px solid #dcdcde;
+	/* Purely decorative -- never intercept clicks meant for elements
+	   around it (e.g. the SSO button rendered immediately above). */
+	pointer-events: none;
 }
 
 .edu-saml-sso-divider span {
@@ -31,3 +38,4 @@
 	font-size: 12px;
 	text-transform: uppercase;
 }
+
