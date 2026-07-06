@@ -1,6 +1,6 @@
 {
-    "name": "edu/denison-saml-sp",
-    "description": "SAML2 Service Provider dependencies for the edu SAML SP WordPress plugin.",
+    "name": "kim3-sudo/edu-saml-sp",
+    "description": "SAML2 Service Provider dependencies for the EDU SAML SP WordPress plugin.",
     "type": "wordpress-plugin",
     "license": "GPL-2.0-or-later",
     "require": {

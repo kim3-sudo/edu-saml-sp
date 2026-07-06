@@ -77,7 +77,7 @@ class EDU_SAML_Settings {
 	 */
 	public function get_options() {
 		if ( null === $this->options ) {
-			$stored        = get_option( DENISON_SAML_SP_OPTION_KEY, array() );
+			$stored        = get_option( EDU_SAML_SP_OPTION_KEY, array() );
 			$this->options = wp_parse_args( is_array( $stored ) ? $stored : array(), self::get_defaults() );
 		}
 		return $this->options;
@@ -102,7 +102,7 @@ class EDU_SAML_Settings {
 	 */
 	public function update( array $options ) {
 		$merged = wp_parse_args( $options, self::get_defaults() );
-		update_option( DENISON_SAML_SP_OPTION_KEY, $merged, false );
+		update_option( EDU_SAML_SP_OPTION_KEY, $merged, false );
 		$this->options = $merged;
 	}
 
@@ -114,7 +114,7 @@ class EDU_SAML_Settings {
 	public function register_settings() {
 		register_setting(
 			'edu_saml_sp_group',
-			DENISON_SAML_SP_OPTION_KEY,
+			EDU_SAML_SP_OPTION_KEY,
 			array(
 				'type'              => 'array',
 				'sanitize_callback' => array( $this, 'sanitize' ),

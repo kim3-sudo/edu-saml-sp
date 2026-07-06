@@ -39,7 +39,7 @@ class EDU_SAML_Admin_Page {
 		if ( 'settings_page_edu-saml-sp' !== $hook ) {
 			return;
 		}
-		wp_enqueue_style( 'edu-saml-sp-admin', DENISON_SAML_SP_URL . 'assets/admin.css', array(), DENISON_SAML_SP_VERSION );
+		wp_enqueue_style( 'edu-saml-sp-admin', EDU_SAML_SP_URL . 'assets/admin.css', array(), EDU_SAML_SP_VERSION );
 	}
 
 	private function current_tab() {
@@ -137,33 +137,33 @@ class EDU_SAML_Admin_Page {
 		<table class="form-table" role="presentation">
 			<tr>
 				<th><label for="idp_entity_id"><?php esc_html_e( 'IdP Entity ID', 'edu-saml-sp' ); ?></label></th>
-				<td><input type="text" class="regular-text" id="idp_entity_id" name="<?php echo esc_attr( DENISON_SAML_SP_OPTION_KEY ); ?>[idp_entity_id]" value="<?php echo esc_attr( $opts['idp_entity_id'] ); ?>" />
+				<td><input type="text" class="regular-text" id="idp_entity_id" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[idp_entity_id]" value="<?php echo esc_attr( $opts['idp_entity_id'] ); ?>" />
 					<p class="description"><?php esc_html_e( 'The unique identifier for the Identity Provider (issuer URI), from your IdP metadata.', 'edu-saml-sp' ); ?></p></td>
 			</tr>
 			<tr>
 				<th><label for="idp_sso_url"><?php esc_html_e( 'IdP SSO URL (entry point)', 'edu-saml-sp' ); ?></label></th>
-				<td><input type="url" class="regular-text" id="idp_sso_url" name="<?php echo esc_attr( DENISON_SAML_SP_OPTION_KEY ); ?>[idp_sso_url]" value="<?php echo esc_attr( $opts['idp_sso_url'] ); ?>" required />
+				<td><input type="url" class="regular-text" id="idp_sso_url" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[idp_sso_url]" value="<?php echo esc_attr( $opts['idp_sso_url'] ); ?>" required />
 					<p class="description"><?php esc_html_e( 'The SingleSignOnService URL where AuthnRequests are sent.', 'edu-saml-sp' ); ?></p></td>
 			</tr>
 			<tr>
 				<th><label for="idp_slo_url"><?php esc_html_e( 'IdP SLO URL (optional)', 'edu-saml-sp' ); ?></label></th>
-				<td><input type="url" class="regular-text" id="idp_slo_url" name="<?php echo esc_attr( DENISON_SAML_SP_OPTION_KEY ); ?>[idp_slo_url]" value="<?php echo esc_attr( $opts['idp_slo_url'] ); ?>" />
+				<td><input type="url" class="regular-text" id="idp_slo_url" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[idp_slo_url]" value="<?php echo esc_attr( $opts['idp_slo_url'] ); ?>" />
 					<p class="description"><?php esc_html_e( 'The SingleLogoutService URL, if your IdP supports SLO.', 'edu-saml-sp' ); ?></p></td>
 			</tr>
 			<tr>
 				<th><label for="idp_x509_cert"><?php esc_html_e( 'IdP x.509 Certificate (PEM)', 'edu-saml-sp' ); ?></label></th>
-				<td><textarea id="idp_x509_cert" name="<?php echo esc_attr( DENISON_SAML_SP_OPTION_KEY ); ?>[idp_x509_cert]" rows="10" class="large-text code" placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----" required><?php echo esc_textarea( $opts['idp_x509_cert'] ); ?></textarea>
+				<td><textarea id="idp_x509_cert" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[idp_x509_cert]" rows="10" class="large-text code" placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----" required><?php echo esc_textarea( $opts['idp_x509_cert'] ); ?></textarea>
 					<p class="description"><?php esc_html_e( 'Paste the full PEM certificate used to verify signed assertions/responses from the IdP.', 'edu-saml-sp' ); ?></p></td>
 			</tr>
 			<tr>
 				<th><label for="sp_entity_id"><?php esc_html_e( 'SP Entity ID / Issuer', 'edu-saml-sp' ); ?></label></th>
-				<td><input type="text" class="regular-text" id="sp_entity_id" name="<?php echo esc_attr( DENISON_SAML_SP_OPTION_KEY ); ?>[sp_entity_id]" value="<?php echo esc_attr( $opts['sp_entity_id'] ); ?>" required />
+				<td><input type="text" class="regular-text" id="sp_entity_id" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[sp_entity_id]" value="<?php echo esc_attr( $opts['sp_entity_id'] ); ?>" required />
 					<p class="description"><?php esc_html_e( 'This site\'s unique SAML entity identifier. Often the site URL. Must match what you register at the IdP.', 'edu-saml-sp' ); ?></p></td>
 			</tr>
 			<tr>
 				<th><label for="nameid_format"><?php esc_html_e( 'NameID Format', 'edu-saml-sp' ); ?></label></th>
 				<td>
-					<select id="nameid_format" name="<?php echo esc_attr( DENISON_SAML_SP_OPTION_KEY ); ?>[nameid_format]">
+					<select id="nameid_format" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[nameid_format]">
 						<?php
 						$formats = array(
 							'emailAddress' => __( 'Email Address', 'edu-saml-sp' ),
@@ -181,7 +181,7 @@ class EDU_SAML_Admin_Page {
 			</tr>
 			<tr>
 				<th><label for="unique_id_attribute"><?php esc_html_e( 'Unique Identifier Attribute', 'edu-saml-sp' ); ?></label></th>
-				<td><input type="text" class="regular-text" id="unique_id_attribute" name="<?php echo esc_attr( DENISON_SAML_SP_OPTION_KEY ); ?>[unique_id_attribute]" value="<?php echo esc_attr( $opts['unique_id_attribute'] ); ?>" />
+				<td><input type="text" class="regular-text" id="unique_id_attribute" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[unique_id_attribute]" value="<?php echo esc_attr( $opts['unique_id_attribute'] ); ?>" />
 					<p class="description"><?php esc_html_e( 'The SAML attribute name that carries the immutable unique identifier (e.g. email, eduPersonPrincipalName, uid, or an Entra/Okta object identifier claim). If absent, the NameID value itself is used.', 'edu-saml-sp' ); ?></p></td>
 			</tr>
 		</table>
@@ -193,20 +193,20 @@ class EDU_SAML_Admin_Page {
 		<table class="form-table" role="presentation">
 			<tr>
 				<th><label for="attr_email"><?php esc_html_e( 'Email Attribute', 'edu-saml-sp' ); ?></label></th>
-				<td><input type="text" class="regular-text" id="attr_email" name="<?php echo esc_attr( DENISON_SAML_SP_OPTION_KEY ); ?>[attr_email]" value="<?php echo esc_attr( $opts['attr_email'] ); ?>" />
+				<td><input type="text" class="regular-text" id="attr_email" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[attr_email]" value="<?php echo esc_attr( $opts['attr_email'] ); ?>" />
 					<p class="description"><?php esc_html_e( 'SAML attribute name carrying the user\'s email address. Treated as mutable — synced on every login.', 'edu-saml-sp' ); ?></p></td>
 			</tr>
 			<tr>
 				<th><label for="attr_first_name"><?php esc_html_e( 'First Name Attribute', 'edu-saml-sp' ); ?></label></th>
-				<td><input type="text" class="regular-text" id="attr_first_name" name="<?php echo esc_attr( DENISON_SAML_SP_OPTION_KEY ); ?>[attr_first_name]" value="<?php echo esc_attr( $opts['attr_first_name'] ); ?>" /></td>
+				<td><input type="text" class="regular-text" id="attr_first_name" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[attr_first_name]" value="<?php echo esc_attr( $opts['attr_first_name'] ); ?>" /></td>
 			</tr>
 			<tr>
 				<th><label for="attr_last_name"><?php esc_html_e( 'Last Name Attribute', 'edu-saml-sp' ); ?></label></th>
-				<td><input type="text" class="regular-text" id="attr_last_name" name="<?php echo esc_attr( DENISON_SAML_SP_OPTION_KEY ); ?>[attr_last_name]" value="<?php echo esc_attr( $opts['attr_last_name'] ); ?>" /></td>
+				<td><input type="text" class="regular-text" id="attr_last_name" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[attr_last_name]" value="<?php echo esc_attr( $opts['attr_last_name'] ); ?>" /></td>
 			</tr>
 			<tr>
 				<th><label for="attr_groups"><?php esc_html_e( 'Groups Attribute', 'edu-saml-sp' ); ?></label></th>
-				<td><input type="text" class="regular-text" id="attr_groups" name="<?php echo esc_attr( DENISON_SAML_SP_OPTION_KEY ); ?>[attr_groups]" value="<?php echo esc_attr( $opts['attr_groups'] ); ?>" />
+				<td><input type="text" class="regular-text" id="attr_groups" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[attr_groups]" value="<?php echo esc_attr( $opts['attr_groups'] ); ?>" />
 					<p class="description"><?php esc_html_e( 'SAML attribute name carrying group membership (e.g. groups, memberOf, or an OID such as http://schemas.xmlsoap.org/claims/Group).', 'edu-saml-sp' ); ?></p></td>
 			</tr>
 		</table>
@@ -221,7 +221,7 @@ class EDU_SAML_Admin_Page {
 				<th><?php esc_html_e( 'Auto-Provision New Users', 'edu-saml-sp' ); ?></th>
 				<td>
 					<label>
-						<input type="checkbox" name="<?php echo esc_attr( DENISON_SAML_SP_OPTION_KEY ); ?>[auto_provision]" value="1" <?php checked( '1', $opts['auto_provision'] ); ?> />
+						<input type="checkbox" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[auto_provision]" value="1" <?php checked( '1', $opts['auto_provision'] ); ?> />
 						<?php esc_html_e( 'Automatically create a new WordPress account on first successful SAML login.', 'edu-saml-sp' ); ?>
 					</label>
 					<p class="description"><?php esc_html_e( 'If disabled, logins for unrecognized identities are denied with a generic error (no account details are revealed).', 'edu-saml-sp' ); ?></p>
@@ -231,7 +231,7 @@ class EDU_SAML_Admin_Page {
 				<th><?php esc_html_e( 'Force SSO Login', 'edu-saml-sp' ); ?></th>
 				<td>
 					<label>
-						<input type="checkbox" name="<?php echo esc_attr( DENISON_SAML_SP_OPTION_KEY ); ?>[force_sso]" value="1" <?php checked( '1', $opts['force_sso'] ); ?> />
+						<input type="checkbox" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[force_sso]" value="1" <?php checked( '1', $opts['force_sso'] ); ?> />
 						<?php esc_html_e( 'Redirect wp-login.php to the Identity Provider for all users.', 'edu-saml-sp' ); ?>
 					</label>
 					<p class="description"><?php esc_html_e( 'Break-glass accounts (configured on the Break-Glass tab) remain exempt and can still sign in with a WordPress username and password via the "Administrator login" link.', 'edu-saml-sp' ); ?></p>
@@ -240,7 +240,7 @@ class EDU_SAML_Admin_Page {
 			<tr>
 				<th><label for="default_role"><?php esc_html_e( 'Default Role', 'edu-saml-sp' ); ?></label></th>
 				<td>
-					<select id="default_role" name="<?php echo esc_attr( DENISON_SAML_SP_OPTION_KEY ); ?>[default_role]">
+					<select id="default_role" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[default_role]">
 						<?php foreach ( $editable_roles as $role_slug => $role_info ) : ?>
 							<option value="<?php echo esc_attr( $role_slug ); ?>" <?php selected( $opts['default_role'], $role_slug ); ?>><?php echo esc_html( translate_user_role( $role_info['name'] ) ); ?></option>
 						<?php endforeach; ?>
@@ -251,7 +251,7 @@ class EDU_SAML_Admin_Page {
 			<tr>
 				<th><label for="group_role_map"><?php esc_html_e( 'Group → Role Mapping', 'edu-saml-sp' ); ?></label></th>
 				<td>
-					<textarea id="group_role_map" name="<?php echo esc_attr( DENISON_SAML_SP_OPTION_KEY ); ?>[group_role_map]" rows="8" class="large-text code" placeholder="IT-Admins = administrator&#10;Faculty = editor&#10;Staff = author"><?php echo esc_textarea( $opts['group_role_map'] ); ?></textarea>
+					<textarea id="group_role_map" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[group_role_map]" rows="8" class="large-text code" placeholder="IT-Admins = administrator&#10;Faculty = editor&#10;Staff = author"><?php echo esc_textarea( $opts['group_role_map'] ); ?></textarea>
 					<p class="description">
 						<?php esc_html_e( 'One mapping per line: Group Value = wp_role. The first matching line (top to bottom) wins; unmatched users get the default role above. Roles must be valid WordPress roles (core roles like Subscriber, Contributor, Author, Editor, Administrator, or any custom role registered by a theme/plugin). Roles are re-synced on every login.', 'edu-saml-sp' ); ?>
 					</p>
@@ -276,7 +276,7 @@ class EDU_SAML_Admin_Page {
 					<tr>
 						<th><label for="breakglass_usernames"><?php esc_html_e( 'Exempt Usernames', 'edu-saml-sp' ); ?></label></th>
 						<td>
-							<textarea id="breakglass_usernames" name="<?php echo esc_attr( DENISON_SAML_SP_OPTION_KEY ); ?>[breakglass_usernames]" rows="5" class="large-text code" placeholder="admin&#10;backup_admin"><?php echo esc_textarea( implode( "\n", (array) $opts['breakglass_usernames'] ) ); ?></textarea>
+							<textarea id="breakglass_usernames" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[breakglass_usernames]" rows="5" class="large-text code" placeholder="admin&#10;backup_admin"><?php echo esc_textarea( implode( "\n", (array) $opts['breakglass_usernames'] ) ); ?></textarea>
 							<p class="description"><?php esc_html_e( 'One WordPress username per line. Only existing usernames are kept after saving.', 'edu-saml-sp' ); ?></p>
 						</td>
 					</tr>
@@ -290,7 +290,7 @@ class EDU_SAML_Admin_Page {
 					if ( is_array( $value ) ) {
 						continue;
 					}
-					echo '<input type="hidden" name="' . esc_attr( DENISON_SAML_SP_OPTION_KEY ) . '[' . esc_attr( $key ) . ']" value="' . esc_attr( $value ) . '" />';
+					echo '<input type="hidden" name="' . esc_attr( EDU_SAML_SP_OPTION_KEY ) . '[' . esc_attr( $key ) . ']" value="' . esc_attr( $value ) . '" />';
 				}
 				submit_button( __( 'Save Break-Glass Usernames', 'edu-saml-sp' ) );
 				?>

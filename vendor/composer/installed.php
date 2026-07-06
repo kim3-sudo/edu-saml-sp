@@ -1,6 +1,6 @@
 <?php return array(
     'root' => array(
-        'name' => 'edu/denison-saml-sp',
+        'name' => 'kim3-sudo/edu-saml-sp',
         'pretty_version' => '1.0.0+no-version-set',
         'version' => '1.0.0.0',
         'reference' => null,
@@ -10,7 +10,7 @@
         'dev' => false,
     ),
     'versions' => array(
-        'edu/denison-saml-sp' => array(
+        'kim3-sudo/edu-saml-sp' => array(
             'pretty_version' => '1.0.0+no-version-set',
             'version' => '1.0.0.0',
             'reference' => null,
