@@ -1,0 +1,33 @@
+/**
+ * Minimal styling for the "Sign in with your institutional account" SSO
+ * button injected into wp-login.php by EDU_SAML_Auth_Handler::render_sso_button().
+ */
+
+.edu-saml-sso-wrap {
+	margin: 0 0 20px;
+}
+
+.edu-saml-sso-button.button.button-hero {
+	display: block;
+	width: 100%;
+	text-align: center;
+	box-sizing: border-box;
+	margin-bottom: 16px;
+}
+
+.edu-saml-sso-divider {
+	position: relative;
+	text-align: center;
+	margin: 0 0 20px;
+	border-top: 1px solid #dcdcde;
+}
+
+.edu-saml-sso-divider span {
+	position: relative;
+	top: -0.7em;
+	background: #fff;
+	padding: 0 10px;
+	color: #646970;
+	font-size: 12px;
+	text-transform: uppercase;
+}

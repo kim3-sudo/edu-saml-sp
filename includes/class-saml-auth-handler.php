@@ -44,7 +44,14 @@ class EDU_SAML_Auth_Handler {
 		// so break-glass admins always have a path to the password form even
 		// when Force SSO is enabled.
 		add_action( 'login_footer', array( $this, 'render_breakglass_link' ) );
+
+		// Render the "Sign in with <IdP>" SSO button above the normal
+		// username/password form (when SSO is configured and not already
+		// force-redirecting away from this page).
+		add_action( 'login_enqueue_scripts', array( $this, 'enqueue_login_assets' ) );
+		add_action( 'login_form', array( $this, 'render_sso_button' ) );
 	}
+
 
 	/**
 	 * Serve SP metadata XML.
