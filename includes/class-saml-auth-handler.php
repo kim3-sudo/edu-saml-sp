@@ -1,0 +1,267 @@
+<?php
+/**
+ * Wires up the SAML endpoints (metadata, login, ACS, SLO) and the
+ * Force-SSO login redirect logic (with break-glass exemption).
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+class EDU_SAML_Auth_Handler {
+
+	/** @var EDU_SAML_Auth_Handler|null */
+	private static $instance = null;
+
+	public static function instance() {
+		if ( null === self::$instance ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
+
+	private function __construct() {
+		// Public (nopriv) + logged-in endpoints via admin-post.php.
+		add_action( 'admin_post_nopriv_edu_saml_metadata', array( $this, 'handle_metadata' ) );
+		add_action( 'admin_post_edu_saml_metadata', array( $this, 'handle_metadata' ) );
+
+		add_action( 'admin_post_nopriv_edu_saml_login', array( $this, 'handle_login' ) );
+		add_action( 'admin_post_edu_saml_login', array( $this, 'handle_login' ) );
+
+		add_action( 'admin_post_nopriv_edu_saml_acs', array( $this, 'handle_acs' ) );
+		add_action( 'admin_post_edu_saml_acs', array( $this, 'handle_acs' ) );
+
+		add_action( 'admin_post_nopriv_edu_saml_slo', array( $this, 'handle_slo' ) );
+		add_action( 'admin_post_edu_saml_slo', array( $this, 'handle_slo' ) );
+
+		EDU_SAML_Breakglass::init();
+
+		// Force-SSO: redirect the standard login form to the IdP unless the
+		// request is explicitly using the break-glass escape hatch.
+		add_action( 'login_init', array( $this, 'maybe_force_sso_redirect' ) );
+
+		// Add a small "Administrator / break-glass login" link to wp-login.php
+		// so break-glass admins always have a path to the password form even
+		// when Force SSO is enabled.
+		add_action( 'login_footer', array( $this, 'render_breakglass_link' ) );
+	}
+
+	/**
+	 * Serve SP metadata XML.
+	 */
+	public function handle_metadata() {
+		if ( edu_saml_sp_library_missing() ) {
+			wp_die( esc_html__( 'SAML library is not installed. Run composer install in the plugin directory.', 'edu-saml-sp' ) );
+		}
+
+		try {
+			$settings_obj = new \OneLogin\Saml2\Settings( EDU_SAML_SP::get_saml_settings(), true );
+			$metadata     = $settings_obj->getSPMetadata();
+			header( 'Content-Type: text/xml' );
+			echo $metadata; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		} catch ( \Exception $e ) {
+			wp_die( esc_html__( 'Unable to generate SP metadata. Check your SAML settings.', 'edu-saml-sp' ) );
+		}
+		exit;
+	}
+
+	/**
+	 * Initiate SP-initiated SSO login (redirect to IdP with AuthnRequest).
+	 */
+	public function handle_login() {
+		if ( edu_saml_sp_library_missing() || ! EDU_SAML_SP::is_configured() ) {
+			wp_die( esc_html__( 'SAML SSO is not fully configured. Please contact your administrator.', 'edu-saml-sp' ) );
+		}
+
+		$redirect_to = isset( $_GET['redirect_to'] ) ? wp_unslash( $_GET['redirect_to'] ) : admin_url();
+		$redirect_to = wp_validate_redirect( $redirect_to, admin_url() );
+
+		try {
+			$auth = EDU_SAML_SP::get_auth();
+			$auth->login( $redirect_to );
+		} catch ( \Exception $e ) {
+			wp_die( esc_html__( 'Unable to start SSO login. Please contact your administrator.', 'edu-saml-sp' ) );
+		}
+		exit;
+	}
+
+	/**
+	 * Assertion Consumer Service: process the SAMLResponse POST from the IdP.
+	 */
+	public function handle_acs() {
+		if ( edu_saml_sp_library_missing() || ! EDU_SAML_SP::is_configured() ) {
+			wp_die( esc_html__( 'SAML SSO is not fully configured. Please contact your administrator.', 'edu-saml-sp' ) );
+		}
+
+		try {
+			$auth = EDU_SAML_SP::get_auth();
+			$auth->processResponse();
+
+			$errors = $auth->getErrors();
+			if ( ! empty( $errors ) ) {
+				$this->log_and_fail( 'ACS processing errors: ' . implode( '; ', $errors ) . ' | Last reason: ' . $auth->getLastErrorReason() );
+			}
+
+			if ( ! $auth->isAuthenticated() ) {
+				$this->log_and_fail( 'ACS: assertion did not result in an authenticated session.' );
+			}
+
+			$name_id    = $auth->getNameId();
+			$attributes = $auth->getAttributes();
+
+			$user_or_error = EDU_SAML_Provisioning::process_assertion( $name_id, $attributes );
+
+			if ( is_wp_error( $user_or_error ) ) {
+				$this->fail_login_generic();
+			}
+
+			$this->log_in_user( $user_or_error );
+
+			$relay_state = isset( $_POST['RelayState'] ) ? wp_unslash( $_POST['RelayState'] ) : '';
+			$redirect_to = $relay_state ? wp_validate_redirect( $relay_state, admin_url() ) : admin_url();
+
+			// Avoid redirecting back to the SP metadata/login endpoints in a loop.
+			if ( false !== strpos( $redirect_to, 'admin-post.php' ) ) {
+				$redirect_to = admin_url();
+			}
+
+			wp_safe_redirect( $redirect_to );
+			exit;
+
+		} catch ( \Exception $e ) {
+			$this->log_and_fail( 'ACS exception: ' . $e->getMessage() );
+		}
+	}
+
+	/**
+	 * Single Logout Service endpoint.
+	 */
+	public function handle_slo() {
+		if ( edu_saml_sp_library_missing() || ! EDU_SAML_SP::is_configured() ) {
+			wp_safe_redirect( home_url( '/' ) );
+			exit;
+		}
+
+		try {
+			$auth = EDU_SAML_SP::get_auth();
+			// This will either redirect to the IdP (SP-initiated logout) or
+			// finish processing an IdP-initiated LogoutRequest/Response.
+			$auth->processSLO( false, null, false, function() {
+				wp_logout();
+			} );
+
+			$errors = $auth->getErrors();
+			if ( ! empty( $errors ) ) {
+				$this->log( 'SLO errors: ' . implode( '; ', $errors ) );
+			}
+		} catch ( \Exception $e ) {
+			$this->log( 'SLO exception: ' . $e->getMessage() );
+		}
+
+		if ( is_user_logged_in() ) {
+			wp_logout();
+		}
+
+		wp_safe_redirect( home_url( '/' ) );
+		exit;
+	}
+
+	/**
+	 * Log the WP user in via standard auth cookie mechanics.
+	 *
+	 * @param WP_User $user
+	 */
+	private function log_in_user( WP_User $user ) {
+		wp_clear_auth_cookie();
+		wp_set_current_user( $user->ID );
+		wp_set_auth_cookie( $user->ID, true );
+		do_action( 'wp_login', $user->user_login, $user );
+	}
+
+	/**
+	 * Log a detailed reason server-side and die with a generic public message.
+	 *
+	 * @param string $detail
+	 */
+	private function log_and_fail( $detail ) {
+		$this->log( $detail );
+		$this->fail_login_generic();
+	}
+
+	/**
+	 * Generic failure response shown to the browser (anti-enumeration).
+	 */
+	private function fail_login_generic() {
+		$login_url = wp_login_url();
+		$message   = __( 'Unable to sign you in with your institutional account. Please contact your administrator if this continues.', 'edu-saml-sp' );
+		wp_safe_redirect( add_query_arg( 'saml_error', rawurlencode( $message ), $login_url ) );
+		exit;
+	}
+
+	private function log( $message ) {
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( '[EDU SAML SP] ' . $message ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
+	}
+
+	/**
+	 * Redirect wp-login.php to the IdP when Force SSO is enabled, unless
+	 * the request is using the break-glass escape hatch or is itself part
+	 * of the SAML flow (avoid infinite redirect loops), or the user is a
+	 * designated break-glass account attempting a normal password login.
+	 */
+	public function maybe_force_sso_redirect() {
+		$settings = EDU_SAML_Settings::instance();
+
+		if ( '1' !== $settings->get( 'force_sso', '0' ) ) {
+			return;
+		}
+
+		if ( ! EDU_SAML_SP::is_configured() ) {
+			return; // Don't lock everyone out if SAML isn't configured yet.
+		}
+
+		// Allow the break-glass escape hatch query param to render the
+		// normal login form. This does NOT bypass authentication -- it only
+		// bypasses the automatic redirect so the password form is reachable.
+		if ( isset( $_GET['breakglass'] ) && '1' === $_GET['breakglass'] ) {
+			return;
+		}
+
+		// Allow logout, password reset, and registration actions to proceed
+		// normally rather than forcing them through SSO.
+		$action = isset( $_REQUEST['action'] ) ? sanitize_key( wp_unslash( $_REQUEST['action'] ) ) : 'login';
+		$exempt_actions = array( 'logout', 'lostpassword', 'retrievepassword', 'resetpass', 'rp', 'register', 'postpass' );
+		if ( in_array( $action, $exempt_actions, true ) ) {
+			return;
+		}
+
+		// If this is a POST login attempt for a break-glass username, allow
+		// it to proceed to normal WP authentication instead of redirecting.
+		if ( 'login' === $action && 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['log'] ) ) {
+			$attempted_username = sanitize_user( wp_unslash( $_POST['log'] ), true );
+			if ( EDU_SAML_Breakglass::is_exempt( $attempted_username ) ) {
+				return;
+			}
+		}
+
+		$redirect_to = isset( $_REQUEST['redirect_to'] ) ? wp_unslash( $_REQUEST['redirect_to'] ) : admin_url();
+		$sso_url     = add_query_arg( 'redirect_to', rawurlencode( wp_validate_redirect( $redirect_to, admin_url() ) ), EDU_SAML_SP::get_login_url() );
+
+		wp_safe_redirect( $sso_url );
+		exit;
+	}
+
+	/**
+	 * Render a small, unobtrusive link on wp-login.php that lets break-glass
+	 * admins reach the normal password form even when Force SSO is enabled.
+	 */
+	public function render_breakglass_link() {
+		$settings = EDU_SAML_Settings::instance();
+		if ( '1' !== $settings->get( 'force_sso', '0' ) ) {
+			return;
+		}
+		$url = add_query_arg( 'breakglass', '1', wp_login_url() );
+		echo '<p style="text-align:center;margin-top:1em;"><a href="' . esc_url( $url ) . '">' . esc_html__( 'Administrator login', 'edu-saml-sp' ) . '</a></p>';
+	}
+}

@@ -1,0 +1,14 @@
+.edu-saml-sp-wrap .nav-tab-wrapper {
+	margin-bottom: 1.5em;
+}
+
+.edu-saml-breakglass h2,
+.edu-saml-breakglass h3 {
+	margin-top: 1.5em;
+}
+
+.edu-saml-breakglass code {
+	background: #f0f0f1;
+	padding: 2px 6px;
+	border-radius: 3px;
+}
