@@ -124,56 +124,97 @@ class EDU_SAML_Settings {
 	}
 
 	/**
+	 * Tabs that contain checkbox fields, mapped to the checkbox option keys
+	 * they render. Used so that unchecking a box on the currently-submitted
+	 * tab is respected (saved as '0'), while checkboxes that simply aren't
+	 * present because they live on a *different* tab are left untouched
+	 * (falling back to the existing stored value) instead of being wiped.
+	 *
+	 * @return array tab_slug => array of option keys.
+	 */
+	private static function checkbox_fields_by_tab() {
+		return array(
+			'provisioning' => array( 'auto_provision', 'force_sso' ),
+			'idp'          => array( 'want_assertions_signed', 'want_messages_signed' ),
+		);
+	}
+
+	/**
 	 * Sanitize incoming settings form submission.
+	 *
+	 * This plugin's settings page is split across multiple tabs, each
+	 * submitting only its own fields via the shared `options.php` handler
+	 * for a single serialized option. To avoid one tab's save wiping out
+	 * values that live on other tabs, any field not present in $input falls
+	 * back to the *currently saved* value (not the hardcoded default).
 	 *
 	 * @param array $input Raw $_POST-derived array.
 	 * @return array Sanitized options array.
 	 */
 	public function sanitize( $input ) {
-		$defaults  = self::get_defaults();
+		$defaults = self::get_defaults();
+
+		// Baseline: whatever is already saved, merged with defaults so any
+		// key that has never been saved still has a sane fallback.
+		$stored   = get_option( EDU_SAML_SP_OPTION_KEY, array() );
+		$existing = wp_parse_args( is_array( $stored ) ? $stored : array(), $defaults );
+
 		$sanitized = array();
 
-		$sanitized['idp_entity_id'] = isset( $input['idp_entity_id'] ) ? sanitize_text_field( wp_unslash( $input['idp_entity_id'] ) ) : $defaults['idp_entity_id'];
-		$sanitized['idp_sso_url']   = isset( $input['idp_sso_url'] ) ? sanitize_url( wp_unslash( $input['idp_sso_url'] ) ) : $defaults['idp_sso_url'];
-		$sanitized['idp_slo_url']   = isset( $input['idp_slo_url'] ) ? sanitize_url( wp_unslash( $input['idp_slo_url'] ) ) : $defaults['idp_slo_url'];
+		$sanitized['idp_entity_id'] = isset( $input['idp_entity_id'] ) ? sanitize_text_field( wp_unslash( $input['idp_entity_id'] ) ) : $existing['idp_entity_id'];
+		$sanitized['idp_sso_url']   = isset( $input['idp_sso_url'] ) ? sanitize_url( wp_unslash( $input['idp_sso_url'] ) ) : $existing['idp_sso_url'];
+		$sanitized['idp_slo_url']   = isset( $input['idp_slo_url'] ) ? sanitize_url( wp_unslash( $input['idp_slo_url'] ) ) : $existing['idp_slo_url'];
 
 		// Certificate: strip anything that isn't part of a PEM block, but keep line structure.
-		$sanitized['idp_x509_cert'] = isset( $input['idp_x509_cert'] ) ? $this->sanitize_pem( wp_unslash( $input['idp_x509_cert'] ) ) : $defaults['idp_x509_cert'];
+		$sanitized['idp_x509_cert'] = isset( $input['idp_x509_cert'] ) ? $this->sanitize_pem( wp_unslash( $input['idp_x509_cert'] ) ) : $existing['idp_x509_cert'];
 
-		$sanitized['sp_entity_id'] = isset( $input['sp_entity_id'] ) ? sanitize_text_field( wp_unslash( $input['sp_entity_id'] ) ) : $defaults['sp_entity_id'];
+		$sanitized['sp_entity_id'] = isset( $input['sp_entity_id'] ) ? sanitize_text_field( wp_unslash( $input['sp_entity_id'] ) ) : $existing['sp_entity_id'];
 
 		$allowed_nameid_formats  = array( 'emailAddress', 'persistent', 'transient', 'unspecified' );
 		$sanitized['nameid_format'] = ( isset( $input['nameid_format'] ) && in_array( $input['nameid_format'], $allowed_nameid_formats, true ) )
 			? $input['nameid_format']
-			: $defaults['nameid_format'];
+			: $existing['nameid_format'];
 
-		$sanitized['unique_id_attribute'] = isset( $input['unique_id_attribute'] ) ? sanitize_text_field( wp_unslash( $input['unique_id_attribute'] ) ) : $defaults['unique_id_attribute'];
+		$sanitized['unique_id_attribute'] = isset( $input['unique_id_attribute'] ) ? sanitize_text_field( wp_unslash( $input['unique_id_attribute'] ) ) : $existing['unique_id_attribute'];
 
-		$sanitized['attr_email']      = isset( $input['attr_email'] ) ? sanitize_text_field( wp_unslash( $input['attr_email'] ) ) : $defaults['attr_email'];
-		$sanitized['attr_first_name'] = isset( $input['attr_first_name'] ) ? sanitize_text_field( wp_unslash( $input['attr_first_name'] ) ) : $defaults['attr_first_name'];
-		$sanitized['attr_last_name']  = isset( $input['attr_last_name'] ) ? sanitize_text_field( wp_unslash( $input['attr_last_name'] ) ) : $defaults['attr_last_name'];
-		$sanitized['attr_groups']     = isset( $input['attr_groups'] ) ? sanitize_text_field( wp_unslash( $input['attr_groups'] ) ) : $defaults['attr_groups'];
+		$sanitized['attr_email']      = isset( $input['attr_email'] ) ? sanitize_text_field( wp_unslash( $input['attr_email'] ) ) : $existing['attr_email'];
+		$sanitized['attr_first_name'] = isset( $input['attr_first_name'] ) ? sanitize_text_field( wp_unslash( $input['attr_first_name'] ) ) : $existing['attr_first_name'];
+		$sanitized['attr_last_name']  = isset( $input['attr_last_name'] ) ? sanitize_text_field( wp_unslash( $input['attr_last_name'] ) ) : $existing['attr_last_name'];
+		$sanitized['attr_groups']     = isset( $input['attr_groups'] ) ? sanitize_text_field( wp_unslash( $input['attr_groups'] ) ) : $existing['attr_groups'];
 
-		$sanitized['auto_provision'] = ! empty( $input['auto_provision'] ) ? '1' : '0';
-		$sanitized['force_sso']      = ! empty( $input['force_sso'] ) ? '1' : '0';
+		// Which tab was actually submitted (if any)? Used below to decide
+		// whether an absent checkbox means "unchecked" or "not on this tab".
+		$submitted_tab = isset( $input['_edu_saml_tab'] ) ? sanitize_key( wp_unslash( $input['_edu_saml_tab'] ) ) : '';
+		$checkbox_map  = self::checkbox_fields_by_tab();
+
+		foreach ( $checkbox_map as $tab_slug => $fields ) {
+			foreach ( $fields as $field ) {
+				if ( $tab_slug === $submitted_tab ) {
+					// This tab was submitted: an absent checkbox truly means unchecked.
+					$sanitized[ $field ] = ! empty( $input[ $field ] ) ? '1' : '0';
+				} else {
+					// A different tab was submitted: preserve the existing value
+					// unless the field happens to be present anyway.
+					$sanitized[ $field ] = isset( $input[ $field ] ) ? ( ! empty( $input[ $field ] ) ? '1' : '0' ) : $existing[ $field ];
+				}
+			}
+		}
 
 		$valid_roles = array_keys( function_exists( 'get_editable_roles' ) ? get_editable_roles() : array() );
 		$sanitized['default_role'] = ( isset( $input['default_role'] ) && in_array( $input['default_role'], $valid_roles, true ) )
 			? $input['default_role']
-			: $defaults['default_role'];
+			: $existing['default_role'];
 
-		$sanitized['group_role_map'] = isset( $input['group_role_map'] ) ? $this->sanitize_group_role_map( wp_unslash( $input['group_role_map'] ), $valid_roles ) : $defaults['group_role_map'];
+		$sanitized['group_role_map'] = isset( $input['group_role_map'] ) ? $this->sanitize_group_role_map( wp_unslash( $input['group_role_map'] ), $valid_roles ) : $existing['group_role_map'];
 
 		// Break-glass usernames: newline or comma separated list -> normalized array of existing usernames.
 		$sanitized['breakglass_usernames'] = isset( $input['breakglass_usernames'] )
 			? $this->sanitize_breakglass_list( wp_unslash( $input['breakglass_usernames'] ) )
-			: $defaults['breakglass_usernames'];
-
-		$sanitized['want_assertions_signed'] = ! empty( $input['want_assertions_signed'] ) ? '1' : '0';
-		$sanitized['want_messages_signed']   = ! empty( $input['want_messages_signed'] ) ? '1' : '0';
+			: $existing['breakglass_usernames'];
 
 		return $sanitized;
 	}
+
 
 	/**
 	 * Keep only valid PEM certificate content (defensive normalization).

@@ -281,19 +281,7 @@ class EDU_SAML_Admin_Page {
 						</td>
 					</tr>
 				</table>
-				<?php
-				// Ensure other option keys are preserved when submitting this sub-form.
-				foreach ( $opts as $key => $value ) {
-					if ( 'breakglass_usernames' === $key ) {
-						continue;
-					}
-					if ( is_array( $value ) ) {
-						continue;
-					}
-					echo '<input type="hidden" name="' . esc_attr( EDU_SAML_SP_OPTION_KEY ) . '[' . esc_attr( $key ) . ']" value="' . esc_attr( $value ) . '" />';
-				}
-				submit_button( __( 'Save Break-Glass Usernames', 'edu-saml-sp' ) );
-				?>
+				<?php submit_button( __( 'Save Break-Glass Usernames', 'edu-saml-sp' ) ); ?>
 			</form>
 
 			<hr />
