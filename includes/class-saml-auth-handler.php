@@ -49,7 +49,15 @@ class EDU_SAML_Auth_Handler {
 		// username/password form (when SSO is configured and not already
 		// force-redirecting away from this page).
 		add_action( 'login_enqueue_scripts', array( $this, 'enqueue_login_assets' ) );
-		add_action( 'login_form', array( $this, 'render_sso_button' ) );
+		// Note: the 'login_form' action fires late in wp-login.php's markup
+		// (right before the submit button), which is AFTER the username and
+		// password fields have already been output. That caused the SSO
+		// button + "or" divider to render below the normal login form
+		// instead of above it. 'login_message' fires just below the logo,
+		// before the <form> markup begins, so hooking it there renders the
+		// SSO button + divider in the correct visual position (above the
+		// username/password fields).
+		add_action( 'login_message', array( $this, 'render_sso_button' ) );
 	}
 
 
@@ -337,4 +345,3 @@ class EDU_SAML_Auth_Handler {
 		echo '</div>';
 	}
 }
-

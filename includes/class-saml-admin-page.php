@@ -92,8 +92,11 @@ class EDU_SAML_Admin_Page {
 					} elseif ( 'provisioning' === $tab ) {
 						$this->render_provisioning_tab( $opts );
 					}
-					// Preserve current tab across save-and-redirect.
-					echo '<input type="hidden" name="_edu_saml_tab" value="' . esc_attr( $tab ) . '" />';
+					// Preserve current tab across save-and-redirect. Nested under the
+					// option key so it actually reaches the sanitize() callback's
+					// $input array (a top-level field name would NOT be visible there).
+					echo '<input type="hidden" name="' . esc_attr( EDU_SAML_SP_OPTION_KEY ) . '[_edu_saml_tab]" value="' . esc_attr( $tab ) . '" />';
+
 					submit_button();
 					?>
 				</form>
