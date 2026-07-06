@@ -45,6 +45,12 @@ class EDU_SAML_Settings {
 			// SP configuration.
 			'sp_entity_id'          => home_url( '/' ),
 
+			// Login page.
+			'sso_button_text'       => __( 'Sign in with your institutional account', 'edu-saml-sp' ),
+			'sso_button_bg_color'      => '',
+			'sso_button_text_color'    => '',
+			'sso_button_hover_color'   => '',
+
 			// NameID / identity.
 			'nameid_format'         => 'emailAddress', // emailAddress | persistent | transient | unspecified.
 			'unique_id_attribute'   => 'email',         // e.g. email, eduPersonPrincipalName, uid, objectidentifier.
@@ -170,6 +176,22 @@ class EDU_SAML_Settings {
 
 		$sanitized['sp_entity_id'] = isset( $input['sp_entity_id'] ) ? sanitize_text_field( wp_unslash( $input['sp_entity_id'] ) ) : $existing['sp_entity_id'];
 
+		// SSO button text: keep the existing/default value if submitted blank
+		// so the button never ends up with empty/missing label text.
+		if ( isset( $input['sso_button_text'] ) && '' !== trim( wp_unslash( $input['sso_button_text'] ) ) ) {
+			$sanitized['sso_button_text'] = sanitize_text_field( wp_unslash( $input['sso_button_text'] ) );
+		} else {
+			$sanitized['sso_button_text'] = $existing['sso_button_text'];
+		}
+
+		// SSO button colors: optional. Blank means "use the theme/WP admin
+		// button default styling" -- so we only accept valid hex colors and
+		// otherwise fall back to blank (not the previously saved value),
+		// since an admin explicitly clearing the field should reset to default.
+		$sanitized['sso_button_bg_color']    = isset( $input['sso_button_bg_color'] ) ? $this->sanitize_hex_color( $input['sso_button_bg_color'] ) : $existing['sso_button_bg_color'];
+		$sanitized['sso_button_text_color']  = isset( $input['sso_button_text_color'] ) ? $this->sanitize_hex_color( $input['sso_button_text_color'] ) : $existing['sso_button_text_color'];
+		$sanitized['sso_button_hover_color'] = isset( $input['sso_button_hover_color'] ) ? $this->sanitize_hex_color( $input['sso_button_hover_color'] ) : $existing['sso_button_hover_color'];
+
 		$allowed_nameid_formats  = array( 'emailAddress', 'persistent', 'transient', 'unspecified' );
 		$sanitized['nameid_format'] = ( isset( $input['nameid_format'] ) && in_array( $input['nameid_format'], $allowed_nameid_formats, true ) )
 			? $input['nameid_format']
@@ -215,6 +237,27 @@ class EDU_SAML_Settings {
 		return $sanitized;
 	}
 
+
+	/**
+	 * Sanitize a hex color value (e.g. "#1a2b3c" or "1a2b3c"). Returns an
+	 * empty string for anything that doesn't validate, so callers can treat
+	 * blank as "use default styling".
+	 *
+	 * @param string $raw
+	 * @return string
+	 */
+	private function sanitize_hex_color( $raw ) {
+		$raw = trim( wp_unslash( (string) $raw ) );
+		if ( '' === $raw ) {
+			return '';
+		}
+		if ( function_exists( 'sanitize_hex_color' ) ) {
+			$color = sanitize_hex_color( $raw );
+			return $color ? $color : '';
+		}
+		// Fallback if sanitize_hex_color() isn't available for some reason.
+		return preg_match( '/^#[0-9a-fA-F]{3,6}$/', $raw ) ? $raw : '';
+	}
 
 	/**
 	 * Keep only valid PEM certificate content (defensive normalization).

@@ -58,6 +58,10 @@ class EDU_SAML_Auth_Handler {
 		// SSO button + divider in the correct visual position (above the
 		// username/password fields).
 		add_action( 'login_message', array( $this, 'render_sso_button' ) );
+
+		// Print inline CSS for the button's hover/focus color (needs its own
+		// <style> block since pseudo-classes can't be set via style="").
+		add_action( 'login_head', array( $this, 'print_custom_color_css' ) );
 	}
 
 
@@ -337,11 +341,75 @@ class EDU_SAML_Auth_Handler {
 			EDU_SAML_SP::get_login_url()
 		);
 
+		$button_text = EDU_SAML_Settings::instance()->get( 'sso_button_text', __( 'Sign in with your institutional account', 'edu-saml-sp' ) );
+		if ( '' === trim( (string) $button_text ) ) {
+			$button_text = __( 'Sign in with your institutional account', 'edu-saml-sp' );
+		}
+
 		echo '<div class="edu-saml-sso-wrap">';
-		echo '<a class="button button-primary button-hero edu-saml-sso-button" href="' . esc_url( $sso_url ) . '">';
-		echo esc_html__( 'Sign in with your institutional account', 'edu-saml-sp' );
+		$style = $this->get_sso_button_inline_style();
+		echo '<a class="button button-primary button-hero edu-saml-sso-button" href="' . esc_url( $sso_url ) . '"' . ( $style ? ' style="' . esc_attr( $style ) . '"' : '' ) . '>';
+		echo esc_html( $button_text );
 		echo '</a>';
 		echo '<div class="edu-saml-sso-divider"><span>' . esc_html__( 'or', 'edu-saml-sp' ) . '</span></div>';
 		echo '</div>';
+	}
+
+	/**
+	 * Build an inline style attribute value for the SSO button's background
+	 * and text colors, if configured. Returns an empty string when no
+	 * custom colors are set (falls back to default WP button styling).
+	 * Hover color is applied separately via a small inline <style> block
+	 * (see enqueue_login_assets()/print_custom_color_css()) since CSS
+	 * pseudo-classes can't be expressed via the style="" attribute.
+	 *
+	 * @return string
+	 */
+	private function get_sso_button_inline_style() {
+		$settings = EDU_SAML_Settings::instance();
+		$bg       = $settings->get( 'sso_button_bg_color', '' );
+		$text     = $settings->get( 'sso_button_text_color', '' );
+
+		$parts = array();
+		if ( $bg ) {
+			$parts[] = 'background-color:' . $bg;
+			$parts[] = 'border-color:' . $bg;
+		}
+		if ( $text ) {
+			$parts[] = 'color:' . $text;
+		}
+
+		return implode( ';', $parts );
+	}
+
+	/**
+	 * Print a small inline <style> block for the SSO button's hover/focus
+	 * background color, when configured. Hooked to login_head so it's
+	 * output in the document <head> alongside the enqueued stylesheet.
+	 */
+	public function print_custom_color_css() {
+		if ( ! $this->should_show_sso_button() ) {
+			return;
+		}
+
+		$settings = EDU_SAML_Settings::instance();
+		$hover    = $settings->get( 'sso_button_hover_color', '' );
+		$text     = $settings->get( 'sso_button_text_color', '' );
+
+		if ( ! $hover ) {
+			return;
+		}
+
+		echo '<style type="text/css">';
+		echo '.edu-saml-sso-button.button.button-hero:hover,';
+		echo '.edu-saml-sso-button.button.button-hero:focus,';
+		echo '.edu-saml-sso-button.button.button-hero:active {';
+		echo 'background-color:' . esc_attr( $hover ) . ';';
+		echo 'border-color:' . esc_attr( $hover ) . ';';
+		if ( $text ) {
+			echo 'color:' . esc_attr( $text ) . ';';
+		}
+		echo '}';
+		echo '</style>';
 	}
 }

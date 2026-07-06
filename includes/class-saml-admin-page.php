@@ -164,6 +164,26 @@ class EDU_SAML_Admin_Page {
 					<p class="description"><?php esc_html_e( 'This site\'s unique SAML entity identifier. Often the site URL. Must match what you register at the IdP.', 'edu-saml-sp' ); ?></p></td>
 			</tr>
 			<tr>
+				<th><label for="sso_button_text"><?php esc_html_e( 'SSO Button Text', 'edu-saml-sp' ); ?></label></th>
+				<td><input type="text" class="regular-text" id="sso_button_text" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[sso_button_text]" value="<?php echo esc_attr( $opts['sso_button_text'] ); ?>" placeholder="<?php esc_attr_e( 'Sign in with your institutional account', 'edu-saml-sp' ); ?>" />
+					<p class="description"><?php esc_html_e( 'Text displayed on the SSO button on the login page. Defaults to "Sign in with your institutional account" if left blank.', 'edu-saml-sp' ); ?></p></td>
+			</tr>
+			<tr>
+				<th><label for="sso_button_bg_color"><?php esc_html_e( 'SSO Button Background Color', 'edu-saml-sp' ); ?></label></th>
+				<td><input type="text" class="edu-saml-color-field" id="sso_button_bg_color" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[sso_button_bg_color]" value="<?php echo esc_attr( $opts['sso_button_bg_color'] ); ?>" placeholder="#2271b1" />
+					<p class="description"><?php esc_html_e( 'Hex color (e.g. #2271b1) for the SSO button background. Leave blank to use the default WordPress button style.', 'edu-saml-sp' ); ?></p></td>
+			</tr>
+			<tr>
+				<th><label for="sso_button_text_color"><?php esc_html_e( 'SSO Button Text Color', 'edu-saml-sp' ); ?></label></th>
+				<td><input type="text" class="edu-saml-color-field" id="sso_button_text_color" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[sso_button_text_color]" value="<?php echo esc_attr( $opts['sso_button_text_color'] ); ?>" placeholder="#ffffff" />
+					<p class="description"><?php esc_html_e( 'Hex color (e.g. #ffffff) for the SSO button label text. Leave blank to use the default.', 'edu-saml-sp' ); ?></p></td>
+			</tr>
+			<tr>
+				<th><label for="sso_button_hover_color"><?php esc_html_e( 'SSO Button Hover Color', 'edu-saml-sp' ); ?></label></th>
+				<td><input type="text" class="edu-saml-color-field" id="sso_button_hover_color" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[sso_button_hover_color]" value="<?php echo esc_attr( $opts['sso_button_hover_color'] ); ?>" placeholder="#135e96" />
+					<p class="description"><?php esc_html_e( 'Hex color (e.g. #135e96) for the SSO button background when hovered/focused. Leave blank to use the default.', 'edu-saml-sp' ); ?></p></td>
+			</tr>
+			<tr>
 				<th><label for="nameid_format"><?php esc_html_e( 'NameID Format', 'edu-saml-sp' ); ?></label></th>
 				<td>
 					<select id="nameid_format" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[nameid_format]">
