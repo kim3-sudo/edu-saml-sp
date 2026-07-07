@@ -154,6 +154,8 @@ class EDU_SAML_Admin_Page {
 
 	private function render_idp_tab( $opts ) {
 		?>
+		<h2><?php esc_html_e( 'Identity Provider Metadata', 'edu-saml-sp' ); ?></h2>
+		<p><?php esc_html_e( 'The settings on this page are required. Get these settings from your IdP.', 'edu-saml-sp' ); ?></p>
 		<table class="form-table" role="presentation">
 			<tr>
 				<th><label for="idp_entity_id"><?php esc_html_e( 'IdP Entity ID', 'edu-saml-sp' ); ?></label></th>
@@ -259,6 +261,8 @@ class EDU_SAML_Admin_Page {
 
 	private function render_login_experience_tab( $opts ) {
 		?>
+		<h2><?php esc_html_e( 'Login Experience Settings', 'edu-saml-sp' ); ?></h2>
+		<p><?php esc_html_e( 'The settings on this page are optional. Use these settings to set custom branding.', 'edu-saml-sp' ); ?></p>
 		<table class="form-table" role="presentation">
 			<tr>
 				<th><label for="sso_button_text"><?php esc_html_e( 'SSO Button Text', 'edu-saml-sp' ); ?></label></th>
@@ -286,6 +290,8 @@ class EDU_SAML_Admin_Page {
 
 	private function render_attributes_tab( $opts ) {
 		?>
+		<h2><?php esc_html_e( 'Attribute Mapping', 'edu-saml-sp' ); ?></h2>
+		<p><?php esc_html_e( 'The settings on this page are required. Get these settings from your IdP.', 'edu-saml-sp' ); ?></p>
 		<table class="form-table" role="presentation">
 			<tr>
 				<th><label for="attr_email"><?php esc_html_e( 'Email Attribute', 'edu-saml-sp' ); ?></label></th>
@@ -303,7 +309,7 @@ class EDU_SAML_Admin_Page {
 			<tr>
 				<th><label for="attr_groups"><?php esc_html_e( 'Groups Attribute', 'edu-saml-sp' ); ?></label></th>
 				<td><input type="text" class="regular-text" id="attr_groups" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[attr_groups]" value="<?php echo esc_attr( $opts['attr_groups'] ); ?>" />
-					<p class="description"><?php esc_html_e( 'SAML attribute name carrying group membership (e.g. groups, memberOf, or an OID such as http://schemas.xmlsoap.org/claims/Group).', 'edu-saml-sp' ); ?></p></td>
+					<p class="description"><?php esc_html_e( 'SAML attribute name carrying group membership (e.g. groups, memberOf, or an OID such as http://schemas.xmlsoap.org/claims/Group). If you are not passing group membership in your IdP assertions, this attribute is ignored and can be left at default.', 'edu-saml-sp' ); ?></p></td>
 			</tr>
 		</table>
 		<?php
@@ -312,6 +318,8 @@ class EDU_SAML_Admin_Page {
 	private function render_provisioning_tab( $opts ) {
 		$editable_roles = function_exists( 'get_editable_roles' ) ? get_editable_roles() : array();
 		?>
+		<h2><?php esc_html_e( 'Provisioning Settings', 'edu-saml-sp' ); ?></h2>
+		<p><?php esc_html_e( 'Set the default provisioning settings and group to role mapping here.', 'edu-saml-sp' ); ?></p>
 		<table class="form-table" role="presentation">
 			<tr>
 				<th><?php esc_html_e( 'Auto-Provision New Users', 'edu-saml-sp' ); ?></th>
@@ -395,6 +403,8 @@ class EDU_SAML_Admin_Page {
 
 	private function render_encryption_tab( $opts ) {
 		?>
+		<h2><?php esc_html_e( 'Assertion Encryption', 'edu-saml-sp' ); ?></h2>
+		<p><?php esc_html_e( 'Not all IdPs support assertion encryption. If yours does, you can configure it here by providing a certificate.', 'edu-saml-sp' ); ?></p>
 		<table class="form-table" role="presentation">
 			<tr>
 				<th><?php esc_html_e( 'Accept Encrypted Assertions', 'edu-saml-sp' ); ?></th>
@@ -461,6 +471,8 @@ class EDU_SAML_Admin_Page {
 
 	private function render_plugin_settings_tab( $opts ) {
 		?>
+		<h2><?php esc_html_e( 'Plugin Settings', 'edu-saml-sp' ); ?></h2>
+		<p><?php esc_html_e( 'Configure the plugin.', 'edu-saml-sp' ); ?></p>
 		<table class="form-table" role="presentation">
 			<tr>
 				<th><label for="diagnostic_logging"><?php esc_html_e( 'Diagnostic Logging', 'edu-saml-sp' ); ?></label></th>
@@ -478,6 +490,7 @@ class EDU_SAML_Admin_Page {
 						<?php endforeach; ?>
 					</select>
 					<p class="description"><?php esc_html_e( 'Controls how much SAML login diagnostic information is written to the PHP error log. "Basic" logs high-level auth events and errors; "Verbose" additionally logs detailed request/response data useful for troubleshooting IdP configuration issues. Leave "Off" in normal production use. When WP_DEBUG is enabled, verbose logging is always available regardless of this setting.', 'edu-saml-sp' ); ?></p>
+					<p class="description"><?php esc_html_e( 'Be careful to not expose non-public information when using verbose logging, and disable diagnostic logging when it is not needed.', 'edu-saml-sp' ); ?></p>
 				</td>
 			</tr>
 		</table>
@@ -489,7 +502,7 @@ class EDU_SAML_Admin_Page {
 		?>
 
 		<h2><?php esc_html_e( 'Service Provider Metadata', 'edu-saml-sp' ); ?></h2>
-		<p><?php esc_html_e( 'Provide these values to your Identity Provider administrator when registering this site as a SAML Service Provider.', 'edu-saml-sp' ); ?></p>
+		<p><?php esc_html_e( 'Provide these values to your IdP administrator when registering this site as a SAML Service Provider.', 'edu-saml-sp' ); ?></p>
 		<table class="form-table" role="presentation">
 			<tr>
 				<th><?php esc_html_e( 'ACS (Assertion Consumer Service) URL', 'edu-saml-sp' ); ?></th>
