@@ -78,12 +78,17 @@ class EDU_SAML_Provisioning {
 		}
 
 		if ( '' === trim( (string) $email ) ) {
+			$attr_email_key = $settings->get( 'attr_email', 'email' );
 			self::log( 'Assertion rejected: cannot auto-provision without an email attribute value.' );
+			self::log_verbose(
+				'Email attribute "' . $attr_email_key . '" was not found (or was empty) in the assertion, and the unique identifier value did not look like an email address. Available assertion attribute names: ' . self::describe_attribute_names( $attributes ) . '.'
+			);
 			return self::generic_error();
 		}
 
 		return self::create_new_user( $unique_id_value, $unique_id_hash, $unique_id_attr, $email, $first_name, $last_name, $groups );
 	}
+
 
 	/**
 	 * A single, generic, non-revealing error used for ALL provisioning /
@@ -101,15 +106,47 @@ class EDU_SAML_Provisioning {
 	/**
 	 * Write a detailed reason to a private server-side log only (never to
 	 * the browser), to preserve anti-enumeration guarantees while still
-	 * giving admins something to debug with.
+	 * giving admins something to debug with. Written whenever WP_DEBUG is
+	 * on, or the "Diagnostic Logging" setting is 'basic'/'verbose'.
 	 *
 	 * @param string $message
 	 */
 	private static function log( $message ) {
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		if ( EDU_SAML_Settings::instance()->should_log( 'basic' ) ) {
 			error_log( '[EDU SAML SP] ' . $message ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 		}
 	}
+
+	/**
+	 * Write a more detailed diagnostic message that may include attribute
+	 * names/values sourced from the IdP assertion. Only written when the
+	 * "Diagnostic Logging" setting is explicitly 'verbose' (or WP_DEBUG is
+	 * on), since this level of detail can include identity data.
+	 *
+	 * @param string $message
+	 */
+	private static function log_verbose( $message ) {
+		if ( EDU_SAML_Settings::instance()->should_log( 'verbose' ) ) {
+			error_log( '[EDU SAML SP] ' . $message ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
+	}
+
+	/**
+	 * Build a human-readable, comma-separated list of attribute names
+	 * present in the assertion (names only, never values), for verbose
+	 * diagnostic logging.
+	 *
+	 * @param array $attributes
+	 * @return string
+	 */
+	private static function describe_attribute_names( array $attributes ) {
+		$names = array_keys( $attributes );
+		if ( empty( $names ) ) {
+			return '(none)';
+		}
+		return implode( ', ', array_map( 'strval', $names ) );
+	}
+
 
 	/**
 	 * Hash the unique identifier value for storage/lookup. We hash (rather

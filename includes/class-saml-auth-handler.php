@@ -59,10 +59,17 @@ class EDU_SAML_Auth_Handler {
 		// username/password fields).
 		add_action( 'login_message', array( $this, 'render_sso_button' ) );
 
+		// Surface any SAML login failure message (set via the saml_error
+		// query arg on redirect back to wp-login.php) so users -- and
+		// admins testing SSO -- actually see that something went wrong,
+		// instead of a silent redirect back to the login form.
+		add_action( 'login_message', array( $this, 'render_saml_error_notice' ) );
+
 		// Print inline CSS for the button's hover/focus color (needs its own
 		// <style> block since pseudo-classes can't be set via style="").
 		add_action( 'login_head', array( $this, 'print_custom_color_css' ) );
 	}
+
 
 
 	/**
@@ -218,10 +225,30 @@ class EDU_SAML_Auth_Handler {
 	}
 
 	private function log( $message ) {
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		if ( EDU_SAML_Settings::instance()->should_log( 'basic' ) ) {
 			error_log( '[EDU SAML SP] ' . $message ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 		}
 	}
+
+	/**
+	 * Render the saml_error message (set via query arg on redirect back to
+	 * wp-login.php after a failed SSO attempt) as a visible error notice.
+	 * Without this, failed SAML logins silently redirect back to the login
+	 * form with no visible feedback to the user or admin testing SSO.
+	 */
+	public function render_saml_error_notice() {
+		if ( ! isset( $_GET['saml_error'] ) ) {
+			return;
+		}
+
+		$message = sanitize_text_field( wp_unslash( $_GET['saml_error'] ) );
+		if ( '' === $message ) {
+			return;
+		}
+
+		echo '<div id="login_error">' . esc_html( $message ) . '</div>';
+	}
+
 
 	/**
 	 * Redirect wp-login.php to the IdP when Force SSO is enabled, unless

@@ -43,10 +43,11 @@ class EDU_SAML_Admin_Page {
 	}
 
 	private function current_tab() {
-		$tabs = array( 'idp', 'login_experience', 'attributes', 'provisioning', 'breakglass', 'metadata' );
+		$tabs = array( 'idp', 'login_experience', 'attributes', 'provisioning', 'breakglass', 'plugin_settings', 'metadata' );
 		$tab  = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'idp';
 		return in_array( $tab, $tabs, true ) ? $tab : 'idp';
 	}
+
 
 	public function render_page() {
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -93,7 +94,10 @@ class EDU_SAML_Admin_Page {
 						$this->render_attributes_tab( $opts );
 					} elseif ( 'provisioning' === $tab ) {
 						$this->render_provisioning_tab( $opts );
+					} elseif ( 'plugin_settings' === $tab ) {
+						$this->render_plugin_settings_tab( $opts );
 					}
+
 					// Preserve current tab across save-and-redirect. Nested under the
 					// option key so it actually reaches the sanitize() callback's
 					// $input array (a top-level field name would NOT be visible there).
@@ -114,9 +118,11 @@ class EDU_SAML_Admin_Page {
 			'attributes'       => __( 'Attribute Mapping', 'edu-saml-sp' ),
 			'provisioning'     => __( 'Provisioning', 'edu-saml-sp' ),
 			'breakglass'       => __( 'Break-Glass', 'edu-saml-sp' ),
+			'plugin_settings'  => __( 'Plugin Settings', 'edu-saml-sp' ),
 			'metadata'         => __( 'SP Metadata', 'edu-saml-sp' ),
 		);
 	}
+
 
 	private function render_notices() {
 		if ( isset( $_GET['edu_saml_bg_created'] ) ) {

@@ -73,8 +73,12 @@ class EDU_SAML_Settings {
 			// Security.
 			'want_assertions_signed'  => '1',
 			'want_messages_signed'    => '0',
+
+			// Plugin settings.
+			'diagnostic_logging'   => 'off', // off | basic | verbose.
 		);
 	}
+
 
 	/**
 	 * Get all options merged with defaults.
@@ -228,6 +232,12 @@ class EDU_SAML_Settings {
 			: $existing['default_role'];
 
 		$sanitized['group_role_map'] = isset( $input['group_role_map'] ) ? $this->sanitize_group_role_map( wp_unslash( $input['group_role_map'] ), $valid_roles ) : $existing['group_role_map'];
+
+		$allowed_diagnostic_logging  = array( 'off', 'basic', 'verbose' );
+		$sanitized['diagnostic_logging'] = ( isset( $input['diagnostic_logging'] ) && in_array( $input['diagnostic_logging'], $allowed_diagnostic_logging, true ) )
+			? $input['diagnostic_logging']
+			: $existing['diagnostic_logging'];
+
 
 		// Break-glass usernames: newline or comma separated list -> normalized array of existing usernames.
 		$sanitized['breakglass_usernames'] = isset( $input['breakglass_usernames'] )
@@ -385,4 +395,34 @@ class EDU_SAML_Settings {
 		$opts['breakglass_usernames'] = array_values( array_unique( $list ) );
 		$this->update( $opts );
 	}
+
+	/**
+	 * Whether a diagnostic log message at the given level should be
+	 * written. WP_DEBUG being enabled always unlocks at least 'basic'
+	 * logging (for backward compatibility) and, since it typically implies
+	 * a development/staging context, also unlocks 'verbose' logging. In
+	 * production, the 'diagnostic_logging' setting is the sole gate.
+	 *
+	 * @param string $level 'basic' or 'verbose'.
+	 * @return bool
+	 */
+	public function should_log( $level = 'basic' ) {
+		$levels = array(
+			'off'     => 0,
+			'basic'   => 1,
+			'verbose' => 2,
+		);
+
+		$requested = isset( $levels[ $level ] ) ? $levels[ $level ] : $levels['basic'];
+
+		$configured = $this->get( 'diagnostic_logging', 'off' );
+		$configured_rank = isset( $levels[ $configured ] ) ? $levels[ $configured ] : $levels['off'];
+
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			$configured_rank = max( $configured_rank, $levels['verbose'] );
+		}
+
+		return $configured_rank >= $requested;
+	}
 }
+
