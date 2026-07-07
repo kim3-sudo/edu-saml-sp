@@ -52,8 +52,11 @@ class EDU_SAML_SP {
 					'url'     => self::get_sls_url(),
 					'binding' => 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect',
 				),
-				'NameIDFormat' => $nameid_format,
+				'NameIDFormat'  => $nameid_format,
+				'x509cert'      => $settings->get( 'sp_x509_cert', '' ),
+				'privateKey'    => $settings->get( 'sp_private_key', '' ),
 			),
+
 
 			'idp' => array(
 				'entityId' => $settings->get( 'idp_entity_id', '' ),
@@ -76,12 +79,46 @@ class EDU_SAML_SP {
 				'wantMessagesSigned'           => '1' === $settings->get( 'want_messages_signed', '0' ),
 				'wantAssertionsSigned'         => '1' === $settings->get( 'want_assertions_signed', '1' ),
 				'wantNameId'                   => true,
-				'wantAssertionsEncrypted'      => false,
+				'wantAssertionsEncrypted'      => '1' === $settings->get( 'want_assertions_encrypted', '0' ),
 				'wantNameIdEncrypted'          => false,
 				'requestedAuthnContext'        => false,
 				'signMetadata'                 => false,
+				'encryptionAlgorithm'          => self::encryption_algorithm_urn( $settings->get( 'assertion_encryption_algorithm', 'aes256-gcm' ) ),
+				'keyEncryptionAlgorithm'       => self::key_transport_algorithm_urn( $settings->get( 'key_transport_algorithm', 'rsa-oaep-sha256' ) ),
 			),
+
 		);
+	}
+
+	/**
+	 * Map the plugin's assertion encryption algorithm option to the XML
+	 * Encryption Syntax URI expected by the OneLogin SAML toolkit / IdPs.
+	 *
+	 * @param string $value 'aes256-gcm' | 'aes256-cbc'.
+	 * @return string
+	 */
+	public static function encryption_algorithm_urn( $value ) {
+		$map = array(
+			'aes256-gcm' => 'http://www.w3.org/2009/xmlenc11#aes256-gcm',
+			'aes256-cbc' => 'http://www.w3.org/2001/04/xmlenc#aes256-cbc',
+		);
+		return isset( $map[ $value ] ) ? $map[ $value ] : $map['aes256-gcm'];
+	}
+
+	/**
+	 * Map the plugin's key transport encryption algorithm option to the XML
+	 * Encryption Syntax URI expected by the OneLogin SAML toolkit / IdPs.
+	 *
+	 * @param string $value 'rsa-oaep-sha256' | 'rsa-oaep-sha1' | 'rsa-1_5'.
+	 * @return string
+	 */
+	public static function key_transport_algorithm_urn( $value ) {
+		$map = array(
+			'rsa-oaep-sha256' => 'http://www.w3.org/2009/xmlenc11#rsa-oaep',
+			'rsa-oaep-sha1'   => 'http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p',
+			'rsa-1_5'         => 'http://www.w3.org/2001/04/xmlenc#rsa-1_5',
+		);
+		return isset( $map[ $value ] ) ? $map[ $value ] : $map['rsa-oaep-sha256'];
 	}
 
 	/**
@@ -90,6 +127,7 @@ class EDU_SAML_SP {
 	 * @return \OneLogin\Saml2\Auth
 	 */
 	public static function get_auth() {
+
 		return new \OneLogin\Saml2\Auth( self::get_saml_settings() );
 	}
 

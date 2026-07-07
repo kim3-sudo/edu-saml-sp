@@ -43,10 +43,11 @@ class EDU_SAML_Admin_Page {
 	}
 
 	private function current_tab() {
-		$tabs = array( 'idp', 'login_experience', 'attributes', 'provisioning', 'breakglass', 'plugin_settings', 'metadata' );
+		$tabs = array( 'idp', 'login_experience', 'attributes', 'provisioning', 'encryption', 'breakglass', 'plugin_settings', 'metadata' );
 		$tab  = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'idp';
 		return in_array( $tab, $tabs, true ) ? $tab : 'idp';
 	}
+
 
 
 	public function render_page() {
@@ -94,6 +95,8 @@ class EDU_SAML_Admin_Page {
 						$this->render_attributes_tab( $opts );
 					} elseif ( 'provisioning' === $tab ) {
 						$this->render_provisioning_tab( $opts );
+					} elseif ( 'encryption' === $tab ) {
+						$this->render_encryption_tab( $opts );
 					} elseif ( 'plugin_settings' === $tab ) {
 						$this->render_plugin_settings_tab( $opts );
 					}
@@ -105,6 +108,7 @@ class EDU_SAML_Admin_Page {
 
 					submit_button();
 					?>
+
 				</form>
 			<?php endif; ?>
 		</div>
@@ -118,11 +122,11 @@ class EDU_SAML_Admin_Page {
 			'login_experience' => __( 'Login Experience', 'edu-saml-sp' ),
 			'attributes'       => __( 'Attribute Mapping', 'edu-saml-sp' ),
 			'provisioning'     => __( 'Provisioning', 'edu-saml-sp' ),
+			'encryption'       => __( 'Assertion Encryption', 'edu-saml-sp' ),
 			'breakglass'       => __( 'Break-Glass', 'edu-saml-sp' ),
 			'plugin_settings'  => __( 'Plugin Settings', 'edu-saml-sp' ),
 		);
 	}
-
 
 	private function render_notices() {
 		settings_errors( 'edu_saml_sp_group' );
@@ -132,6 +136,7 @@ class EDU_SAML_Admin_Page {
 
 			if ( $creds ) {
 				echo '<div class="notice notice-success"><p><strong>' . esc_html__( 'Break-glass admin account created.', 'edu-saml-sp' ) . '</strong></p>';
+
 				echo '<p>' . esc_html__( 'Username:', 'edu-saml-sp' ) . ' <code>' . esc_html( $creds['username'] ) . '</code></p>';
 				echo '<p>' . esc_html__( 'Password (shown once — save it now):', 'edu-saml-sp' ) . ' <code>' . esc_html( $creds['password'] ) . '</code></p>';
 				echo '<p>' . esc_html__( 'This password will not be shown again. Please update the account email address via Users afterward.', 'edu-saml-sp' ) . '</p></div>';
@@ -388,8 +393,101 @@ class EDU_SAML_Admin_Page {
 		<?php
 	}
 
-	private function render_metadata_tab() {
+	private function render_encryption_tab( $opts ) {
 		?>
+		<table class="form-table" role="presentation">
+			<tr>
+				<th><?php esc_html_e( 'Accept Encrypted Assertions', 'edu-saml-sp' ); ?></th>
+				<td>
+					<label>
+						<input type="checkbox" id="want_assertions_encrypted" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[want_assertions_encrypted]" value="1" <?php checked( '1', $opts['want_assertions_encrypted'] ); ?> />
+						<?php esc_html_e( 'Require/accept SAML assertions encrypted by the Identity Provider.', 'edu-saml-sp' ); ?>
+					</label>
+					<p class="description"><?php esc_html_e( 'Not all Identity Providers support assertion encryption. If enabled, provide the SP certificate and private key below, and give the certificate to your IdP administrator so they can encrypt assertions using it.', 'edu-saml-sp' ); ?></p>
+				</td>
+			</tr>
+			<tr>
+				<th><label for="sp_x509_cert"><?php esc_html_e( 'SP Certificate (PEM)', 'edu-saml-sp' ); ?></label></th>
+				<td>
+					<textarea id="sp_x509_cert" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[sp_x509_cert]" rows="10" class="large-text code" placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"><?php echo esc_textarea( $opts['sp_x509_cert'] ); ?></textarea>
+					<p class="description"><?php esc_html_e( 'The public certificate (PEM format — typically a .pem, .cert, .crt, or .cer file) for this Service Provider. Give this to your IdP administrator so encrypted assertions can be sent to this site.', 'edu-saml-sp' ); ?></p>
+				</td>
+			</tr>
+			<tr>
+				<th><label for="sp_private_key"><?php esc_html_e( 'SP Private Key (PEM)', 'edu-saml-sp' ); ?></label></th>
+				<td>
+					<textarea id="sp_private_key" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[sp_private_key]" rows="10" class="large-text code" placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"><?php echo esc_textarea( $opts['sp_private_key'] ); ?></textarea>
+					<p class="description"><?php esc_html_e( 'The private key (PEM format) matching the certificate above. Used to decrypt assertions sent by the IdP. Keep this secret — never share it with the IdP.', 'edu-saml-sp' ); ?></p>
+				</td>
+			</tr>
+			<tr>
+				<th><label for="assertion_encryption_algorithm"><?php esc_html_e( 'Assertion Encryption Algorithm', 'edu-saml-sp' ); ?></label></th>
+				<td>
+					<select id="assertion_encryption_algorithm" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[assertion_encryption_algorithm]">
+						<?php
+						$assertion_algorithms = array(
+							'aes256-gcm' => __( 'AES256-GCM (recommended)', 'edu-saml-sp' ),
+							'aes256-cbc' => __( 'AES256-CBC', 'edu-saml-sp' ),
+						);
+						foreach ( $assertion_algorithms as $value => $label ) :
+							?>
+							<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $opts['assertion_encryption_algorithm'], $value ); ?>><?php echo esc_html( $label ); ?></option>
+						<?php endforeach; ?>
+					</select>
+					<p class="description"><?php esc_html_e( 'The symmetric algorithm the IdP should use to encrypt the assertion content. Communicate this to your IdP administrator.', 'edu-saml-sp' ); ?></p>
+				</td>
+			</tr>
+			<tr>
+				<th><label for="key_transport_algorithm"><?php esc_html_e( 'Key Transport Encryption Algorithm', 'edu-saml-sp' ); ?></label></th>
+				<td>
+					<select id="key_transport_algorithm" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[key_transport_algorithm]">
+						<?php
+						$key_transport_algorithms = array(
+							'rsa-oaep-sha256' => __( 'RSA-OAEP with SHA-256 mask (recommended)', 'edu-saml-sp' ),
+							'rsa-oaep-sha1'   => __( 'RSA-OAEP with SHA-1 mask', 'edu-saml-sp' ),
+							'rsa-1_5'         => __( 'RSA-1.5', 'edu-saml-sp' ),
+						);
+						foreach ( $key_transport_algorithms as $value => $label ) :
+							?>
+							<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $opts['key_transport_algorithm'], $value ); ?>><?php echo esc_html( $label ); ?></option>
+						<?php endforeach; ?>
+					</select>
+					<p class="description"><?php esc_html_e( 'The algorithm the IdP should use to encrypt the symmetric key with this SP\'s public certificate. Communicate this to your IdP administrator.', 'edu-saml-sp' ); ?></p>
+				</td>
+			</tr>
+		</table>
+		<?php
+	}
+
+	private function render_plugin_settings_tab( $opts ) {
+		?>
+		<table class="form-table" role="presentation">
+			<tr>
+				<th><label for="diagnostic_logging"><?php esc_html_e( 'Diagnostic Logging', 'edu-saml-sp' ); ?></label></th>
+				<td>
+					<select id="diagnostic_logging" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[diagnostic_logging]">
+						<?php
+						$logging_levels = array(
+							'off'     => __( 'Off', 'edu-saml-sp' ),
+							'basic'   => __( 'Basic', 'edu-saml-sp' ),
+							'verbose' => __( 'Verbose', 'edu-saml-sp' ),
+						);
+						foreach ( $logging_levels as $value => $label ) :
+							?>
+							<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $opts['diagnostic_logging'], $value ); ?>><?php echo esc_html( $label ); ?></option>
+						<?php endforeach; ?>
+					</select>
+					<p class="description"><?php esc_html_e( 'Controls how much SAML login diagnostic information is written to the PHP error log. "Basic" logs high-level auth events and errors; "Verbose" additionally logs detailed request/response data useful for troubleshooting IdP configuration issues. Leave "Off" in normal production use. When WP_DEBUG is enabled, verbose logging is always available regardless of this setting.', 'edu-saml-sp' ); ?></p>
+				</td>
+			</tr>
+		</table>
+		<?php
+	}
+
+	private function render_metadata_tab() {
+
+		?>
+
 		<h2><?php esc_html_e( 'Service Provider Metadata', 'edu-saml-sp' ); ?></h2>
 		<p><?php esc_html_e( 'Provide these values to your Identity Provider administrator when registering this site as a SAML Service Provider.', 'edu-saml-sp' ); ?></p>
 		<table class="form-table" role="presentation">

@@ -74,10 +74,18 @@ class EDU_SAML_Settings {
 			'want_assertions_signed'  => '1',
 			'want_messages_signed'    => '0',
 
+			// Assertion encryption (optional; not all IdPs support this).
+			'want_assertions_encrypted'      => '0',   // '1' or '0'.
+			'sp_x509_cert'                   => '',    // SP's public certificate (PEM), given to the IdP for encryption.
+			'sp_private_key'                 => '',    // SP's private key (PEM), used to decrypt assertions.
+			'assertion_encryption_algorithm' => 'aes256-gcm', // aes256-gcm | aes256-cbc.
+			'key_transport_algorithm'        => 'rsa-oaep-sha256', // rsa-oaep-sha256 | rsa-oaep-sha1 | rsa-1_5.
+
 			// Plugin settings.
 			'diagnostic_logging'   => 'off', // off | basic | verbose.
 		);
 	}
+
 
 
 	/**
@@ -146,8 +154,10 @@ class EDU_SAML_Settings {
 		return array(
 			'provisioning' => array( 'auto_provision', 'force_sso' ),
 			'idp'          => array( 'want_assertions_signed', 'want_messages_signed' ),
+			'encryption'   => array( 'want_assertions_encrypted' ),
 		);
 	}
+
 
 	/**
 	 * Sanitize incoming settings form submission.
@@ -243,6 +253,35 @@ class EDU_SAML_Settings {
 		$sanitized['breakglass_usernames'] = isset( $input['breakglass_usernames'] )
 			? $this->sanitize_breakglass_list( wp_unslash( $input['breakglass_usernames'] ) )
 			: $existing['breakglass_usernames'];
+
+		// Assertion encryption: SP certificate/private key pair, plus the
+		// algorithm hints communicated to the IdP admin. This is entirely
+		// optional -- not all IdPs support assertion encryption -- and is
+		// gated by the 'want_assertions_encrypted' checkbox handled above.
+		$sanitized['sp_x509_cert']   = isset( $input['sp_x509_cert'] ) ? $this->sanitize_pem( wp_unslash( $input['sp_x509_cert'] ) ) : $existing['sp_x509_cert'];
+		$sanitized['sp_private_key'] = isset( $input['sp_private_key'] ) ? $this->sanitize_pem( wp_unslash( $input['sp_private_key'] ) ) : $existing['sp_private_key'];
+
+		$allowed_assertion_algorithms = array( 'aes256-gcm', 'aes256-cbc' );
+		$sanitized['assertion_encryption_algorithm'] = ( isset( $input['assertion_encryption_algorithm'] ) && in_array( $input['assertion_encryption_algorithm'], $allowed_assertion_algorithms, true ) )
+			? $input['assertion_encryption_algorithm']
+			: $existing['assertion_encryption_algorithm'];
+
+		$allowed_key_transport_algorithms = array( 'rsa-oaep-sha256', 'rsa-oaep-sha1', 'rsa-1_5' );
+		$sanitized['key_transport_algorithm'] = ( isset( $input['key_transport_algorithm'] ) && in_array( $input['key_transport_algorithm'], $allowed_key_transport_algorithms, true ) )
+			? $input['key_transport_algorithm']
+			: $existing['key_transport_algorithm'];
+
+		// If encryption is enabled but the cert/key pair is incomplete,
+		// warn the admin -- decryption cannot work without both.
+		if ( '1' === $sanitized['want_assertions_encrypted'] && ( '' === $sanitized['sp_x509_cert'] || '' === $sanitized['sp_private_key'] ) ) {
+			add_settings_error(
+				'edu_saml_sp_group',
+				'edu_saml_encryption_incomplete',
+				__( '"Accept Encrypted Assertions" is enabled, but the SP certificate and/or private key is missing. Encrypted assertions cannot be decrypted until both are provided.', 'edu-saml-sp' ),
+				'warning'
+			);
+		}
+
 
 		// Security invariant: at least one of "require signed response" /
 		// "require signed assertion" must always be enabled -- this plugin
