@@ -244,8 +244,26 @@ class EDU_SAML_Settings {
 			? $this->sanitize_breakglass_list( wp_unslash( $input['breakglass_usernames'] ) )
 			: $existing['breakglass_usernames'];
 
+		// Security invariant: at least one of "require signed response" /
+		// "require signed assertion" must always be enabled -- this plugin
+		// will not accept fully unsigned SAML responses. Rather than trust
+		// an admin to catch this themselves, enforce it here so it can
+		// never be persisted with both disabled. Assertion-signing is
+		// re-enabled as the fallback since it's the plugin's original
+		// default and the behavior nearly all IdPs support out of the box.
+		if ( '1' !== $sanitized['want_assertions_signed'] && '1' !== $sanitized['want_messages_signed'] ) {
+			$sanitized['want_assertions_signed'] = '1';
+			add_settings_error(
+				'edu_saml_sp_group',
+				'edu_saml_signing_requirement',
+				__( 'At least one of "Require Signed Response" or "Require Signed Assertion" must be enabled. "Require Signed Assertion" has been re-enabled automatically.', 'edu-saml-sp' ),
+				'warning'
+			);
+		}
+
 		return $sanitized;
 	}
+
 
 
 	/**

@@ -125,8 +125,11 @@ class EDU_SAML_Admin_Page {
 
 
 	private function render_notices() {
+		settings_errors( 'edu_saml_sp_group' );
+
 		if ( isset( $_GET['edu_saml_bg_created'] ) ) {
 			$creds = EDU_SAML_Breakglass::consume_pending_credentials();
+
 			if ( $creds ) {
 				echo '<div class="notice notice-success"><p><strong>' . esc_html__( 'Break-glass admin account created.', 'edu-saml-sp' ) . '</strong></p>';
 				echo '<p>' . esc_html__( 'Username:', 'edu-saml-sp' ) . ' <code>' . esc_html( $creds['username'] ) . '</code></p>';
@@ -168,6 +171,54 @@ class EDU_SAML_Admin_Page {
 					<p class="description"><?php esc_html_e( 'Paste the full PEM certificate used to verify signed assertions/responses from the IdP.', 'edu-saml-sp' ); ?></p></td>
 			</tr>
 			<tr>
+				<th><?php esc_html_e( 'Signature Requirements', 'edu-saml-sp' ); ?></th>
+				<td>
+					<fieldset>
+						<label>
+							<input type="checkbox" id="want_messages_signed" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[want_messages_signed]" value="1" <?php checked( '1', $opts['want_messages_signed'] ); ?> />
+							<?php esc_html_e( 'Require Signed Response', 'edu-saml-sp' ); ?>
+						</label>
+						<br />
+						<label>
+							<input type="checkbox" id="want_assertions_signed" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[want_assertions_signed]" value="1" <?php checked( '1', $opts['want_assertions_signed'] ); ?> />
+							<?php esc_html_e( 'Require Signed Assertion', 'edu-saml-sp' ); ?>
+						</label>
+					</fieldset>
+					<p class="description"><?php esc_html_e( 'At least one of these must be enabled — this plugin will not accept unsigned SAML responses. If you attempt to save with both unchecked, "Require Signed Assertion" will be re-enabled automatically.', 'edu-saml-sp' ); ?></p>
+					<p class="description" id="edu_saml_signing_guidance" style="font-style:italic;"></p>
+					<script>
+					( function() {
+						var msgCb  = document.getElementById( 'want_messages_signed' );
+						var assCb  = document.getElementById( 'want_assertions_signed' );
+						var guide  = document.getElementById( 'edu_saml_signing_guidance' );
+						if ( ! msgCb || ! assCb || ! guide ) {
+							return;
+						}
+						var text = {
+							both: <?php echo wp_json_encode( __( 'IdP configuration: sign both the SAML Response and the Assertion.', 'edu-saml-sp' ) ); ?>,
+							assertionOnly: <?php echo wp_json_encode( __( 'IdP configuration: sign the SAML Assertion (this is the default behavior for most Identity Providers).', 'edu-saml-sp' ) ); ?>,
+							responseOnly: <?php echo wp_json_encode( __( 'IdP configuration: sign the entire SAML Response/message, not just the Assertion.', 'edu-saml-sp' ) ); ?>,
+							none: <?php echo wp_json_encode( __( 'At least one signature requirement must be enabled.', 'edu-saml-sp' ) ); ?>
+						};
+						function update() {
+							if ( msgCb.checked && assCb.checked ) {
+								guide.textContent = text.both;
+							} else if ( assCb.checked ) {
+								guide.textContent = text.assertionOnly;
+							} else if ( msgCb.checked ) {
+								guide.textContent = text.responseOnly;
+							} else {
+								guide.textContent = text.none;
+							}
+						}
+						msgCb.addEventListener( 'change', update );
+						assCb.addEventListener( 'change', update );
+						update();
+					} )();
+					</script>
+				</td>
+			</tr>
+			<tr>
 				<th><label for="sp_entity_id"><?php esc_html_e( 'SP Entity ID / Issuer', 'edu-saml-sp' ); ?></label></th>
 				<td><input type="text" class="regular-text" id="sp_entity_id" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[sp_entity_id]" value="<?php echo esc_attr( $opts['sp_entity_id'] ); ?>" required />
 					<p class="description"><?php esc_html_e( 'This site\'s unique SAML entity identifier. Often the site URL. Must match what you register at the IdP.', 'edu-saml-sp' ); ?></p></td>
@@ -183,6 +234,7 @@ class EDU_SAML_Admin_Page {
 							'transient'    => __( 'Transient', 'edu-saml-sp' ),
 							'unspecified'  => __( 'Unspecified', 'edu-saml-sp' ),
 						);
+
 						foreach ( $formats as $value => $label ) :
 							?>
 							<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $opts['nameid_format'], $value ); ?>><?php echo esc_html( $label ); ?></option>
