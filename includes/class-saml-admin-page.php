@@ -113,13 +113,13 @@ class EDU_SAML_Admin_Page {
 
 	private function tabs() {
 		return array(
-			'idp'              => __( 'Identity Provider', 'edu-saml-sp' ),
+			'idp'              => __( 'IdP Metadata', 'edu-saml-sp' ),
+			'metadata'         => __( 'SP Metadata', 'edu-saml-sp' ),
 			'login_experience' => __( 'Login Experience', 'edu-saml-sp' ),
 			'attributes'       => __( 'Attribute Mapping', 'edu-saml-sp' ),
 			'provisioning'     => __( 'Provisioning', 'edu-saml-sp' ),
 			'breakglass'       => __( 'Break-Glass', 'edu-saml-sp' ),
 			'plugin_settings'  => __( 'Plugin Settings', 'edu-saml-sp' ),
-			'metadata'         => __( 'SP Metadata', 'edu-saml-sp' ),
 		);
 	}
 
