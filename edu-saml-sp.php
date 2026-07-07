@@ -40,6 +40,7 @@ require_once EDU_SAML_SP_DIR . 'includes/class-saml-sp.php';
 require_once EDU_SAML_SP_DIR . 'includes/class-saml-provisioning.php';
 require_once EDU_SAML_SP_DIR . 'includes/class-saml-breakglass.php';
 require_once EDU_SAML_SP_DIR . 'includes/class-saml-auth-handler.php';
+require_once EDU_SAML_SP_DIR . 'includes/class-saml-idp-metadata-importer.php';
 require_once EDU_SAML_SP_DIR . 'includes/class-saml-admin-page.php';
 
 /**
@@ -71,11 +72,13 @@ add_action( 'admin_notices', 'edu_saml_sp_missing_library_notice' );
 function edu_saml_sp_init() {
 	EDU_SAML_Settings::instance();
 	EDU_SAML_Admin_Page::instance();
+	EDU_SAML_IdP_Metadata_Importer::instance();
 
 	if ( ! edu_saml_sp_library_missing() ) {
 		EDU_SAML_Auth_Handler::instance();
 	}
 }
+
 add_action( 'plugins_loaded', 'edu_saml_sp_init' );
 
 /**

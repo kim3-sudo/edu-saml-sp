@@ -16,3 +16,29 @@
 .edu-saml-color-field {
 	width: 100px;
 }
+
+.edu-saml-autopopulate-box {
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	padding: 1em 1.5em;
+	margin-bottom: 1.5em;
+}
+
+.edu-saml-autopopulate-box h3 {
+	margin-top: 0;
+}
+
+.edu-saml-autopopulate-status {
+	margin-left: 10px;
+	font-style: italic;
+}
+
+.edu-saml-autopopulate-status--error {
+	color: #d63638;
+}
+
+.edu-saml-autopopulate-status--success {
+	color: #00a32a;
+}
+

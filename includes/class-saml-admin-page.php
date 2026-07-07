@@ -40,7 +40,32 @@ class EDU_SAML_Admin_Page {
 			return;
 		}
 		wp_enqueue_style( 'edu-saml-sp-admin', EDU_SAML_SP_URL . 'assets/admin.css', array(), EDU_SAML_SP_VERSION );
+
+		wp_enqueue_script(
+			'edu-saml-sp-admin',
+			EDU_SAML_SP_URL . 'assets/admin.js',
+			array(),
+			EDU_SAML_SP_VERSION,
+			true
+		);
+		wp_localize_script(
+			'edu-saml-sp-admin',
+			'eduSamlIdpImporter',
+			array(
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'action'  => EDU_SAML_IdP_Metadata_Importer::ACTION,
+				'nonce'   => wp_create_nonce( EDU_SAML_IdP_Metadata_Importer::NONCE_ACTION ),
+				'i18n'    => array(
+					'confirm'       => __( "Auto-populating will overwrite the IdP Entity ID, SSO URL, SLO URL, and Certificate fields below with values parsed from the provided metadata.\n\nAny existing values in those fields will be lost (unless left blank in the metadata). This change is not saved until you click \"Save Changes\".\n\nContinue?", 'edu-saml-sp' ),
+					'needInput'     => __( 'Please enter a metadata URL or choose a metadata file to upload first.', 'edu-saml-sp' ),
+					'working'       => __( 'Fetching and parsing metadata…', 'edu-saml-sp' ),
+					'success'       => __( 'IdP metadata fields have been populated below. Review them, then click "Save Changes" to save.', 'edu-saml-sp' ),
+					'genericError'  => __( 'Unable to auto-populate IdP metadata.', 'edu-saml-sp' ),
+				),
+			)
+		);
 	}
+
 
 	private function current_tab() {
 		$tabs = array( 'idp', 'login_experience', 'attributes', 'provisioning', 'encryption', 'breakglass', 'plugin_settings', 'metadata' );
@@ -156,9 +181,32 @@ class EDU_SAML_Admin_Page {
 		?>
 		<h2><?php esc_html_e( 'Identity Provider Metadata', 'edu-saml-sp' ); ?></h2>
 		<p><?php esc_html_e( 'The settings on this page are required. Get these settings from your IdP.', 'edu-saml-sp' ); ?></p>
+
+		<div class="edu-saml-autopopulate-box">
+			<h3><?php esc_html_e( 'Auto-Populate from IdP Metadata', 'edu-saml-sp' ); ?></h3>
+			<p class="description"><?php esc_html_e( 'Paste your IdP\'s metadata URL, or upload its metadata XML file, then click "Auto Populate" to automatically fill in the Entity ID, SSO URL, SLO URL, and Certificate fields below. Nothing is saved until you review the values and click "Save Changes".', 'edu-saml-sp' ); ?></p>
+
+			<table class="form-table" role="presentation">
+				<tr>
+					<th><label for="edu_saml_metadata_url"><?php esc_html_e( 'Metadata URL', 'edu-saml-sp' ); ?></label></th>
+					<td><input type="url" class="regular-text" id="edu_saml_metadata_url" placeholder="https://idp.example.edu/metadata" /></td>
+				</tr>
+				<tr>
+					<th><label for="edu_saml_metadata_file"><?php esc_html_e( 'Or upload metadata file', 'edu-saml-sp' ); ?></label></th>
+					<td><input type="file" id="edu_saml_metadata_file" accept=".xml,text/xml,application/xml,application/samlmetadata+xml" /></td>
+				</tr>
+			</table>
+
+			<p>
+				<button type="button" class="button button-secondary" id="edu_saml_autopopulate_btn"><?php esc_html_e( 'Auto Populate', 'edu-saml-sp' ); ?></button>
+				<span id="edu_saml_autopopulate_status" class="edu-saml-autopopulate-status" role="status" aria-live="polite"></span>
+			</p>
+		</div>
+
 		<table class="form-table" role="presentation">
 			<tr>
 				<th><label for="idp_entity_id"><?php esc_html_e( 'IdP Entity ID', 'edu-saml-sp' ); ?></label></th>
+
 				<td><input type="text" class="regular-text" id="idp_entity_id" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[idp_entity_id]" value="<?php echo esc_attr( $opts['idp_entity_id'] ); ?>" />
 					<p class="description"><?php esc_html_e( 'The unique identifier for the Identity Provider (issuer URI), from your IdP metadata.', 'edu-saml-sp' ); ?></p></td>
 			</tr>
