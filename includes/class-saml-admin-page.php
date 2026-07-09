@@ -111,7 +111,7 @@ class EDU_SAML_Admin_Page {
 				background-clip: text;
 				-webkit-text-fill-color: transparent;
 				color: transparent;
-				animation: edu-saml-unicorn-rainbow 6s linear infinite;
+				animation: edu-saml-unicorn-rainbow 12s linear infinite;
 			}
 			.edu-saml-sp-wrap input,
 			.edu-saml-sp-wrap textarea,
