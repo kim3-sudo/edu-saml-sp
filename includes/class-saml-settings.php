@@ -83,7 +83,9 @@ class EDU_SAML_Settings {
 
 			// Plugin settings.
 			'diagnostic_logging'   => 'off', // off | basic | verbose.
+			'unicorn_mode'         => '0',   // '1' or '0' -- easter egg: Comic Sans + rainbow text on the settings page.
 		);
+
 	}
 
 
@@ -152,10 +154,12 @@ class EDU_SAML_Settings {
 	 */
 	private static function checkbox_fields_by_tab() {
 		return array(
-			'provisioning' => array( 'auto_provision', 'force_sso' ),
-			'idp'          => array( 'want_assertions_signed', 'want_messages_signed' ),
-			'encryption'   => array( 'want_assertions_encrypted' ),
+			'provisioning'    => array( 'auto_provision', 'force_sso' ),
+			'idp'             => array( 'want_assertions_signed', 'want_messages_signed' ),
+			'encryption'      => array( 'want_assertions_encrypted' ),
+			'plugin_settings' => array( 'unicorn_mode' ),
 		);
+
 	}
 
 

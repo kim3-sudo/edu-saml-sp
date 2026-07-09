@@ -41,6 +41,11 @@ class EDU_SAML_Admin_Page {
 		}
 		wp_enqueue_style( 'edu-saml-sp-admin', EDU_SAML_SP_URL . 'assets/admin.css', array(), EDU_SAML_SP_VERSION );
 
+		if ( '1' === EDU_SAML_Settings::instance()->get( 'unicorn_mode', '0' ) ) {
+			wp_add_inline_style( 'edu-saml-sp-admin', $this->unicorn_mode_css() );
+		}
+
+
 		wp_enqueue_script(
 			'edu-saml-sp-admin',
 			EDU_SAML_SP_URL . 'assets/admin.js',
@@ -67,7 +72,47 @@ class EDU_SAML_Admin_Page {
 	}
 
 
+	/**
+	 * Inline CSS for the "Unicorn Mode" easter egg: Comic Sans font and an
+	 * animated rainbow text-color effect, scoped entirely to this plugin's
+	 * settings page wrapper so it never leaks elsewhere in wp-admin.
+	 *
+	 * @return string
+	 */
+	private function unicorn_mode_css() {
+		return "
+			.edu-saml-sp-wrap, .edu-saml-sp-wrap * {
+				font-family: 'Comic Sans MS', 'Comic Sans', cursive !important;
+			}
+			.edu-saml-sp-wrap h1,
+			.edu-saml-sp-wrap h2,
+			.edu-saml-sp-wrap h3,
+			.edu-saml-sp-wrap p,
+			.edu-saml-sp-wrap label,
+			.edu-saml-sp-wrap th,
+			.edu-saml-sp-wrap td,
+			.edu-saml-sp-wrap li,
+			.edu-saml-sp-wrap a,
+			.edu-saml-sp-wrap strong,
+			.edu-saml-sp-wrap span,
+			.edu-saml-sp-wrap .nav-tab {
+				background-image: linear-gradient(90deg, #ff0000, #ff9900, #ffee00, #33ff00, #00ffee, #3300ff, #ee00ff, #ff0000);
+				background-size: 400% 100%;
+				-webkit-background-clip: text;
+				background-clip: text;
+				-webkit-text-fill-color: transparent;
+				color: transparent;
+				animation: edu-saml-unicorn-rainbow 6s linear infinite;
+			}
+			@keyframes edu-saml-unicorn-rainbow {
+				0% { background-position: 0% 50%; }
+				100% { background-position: 400% 50%; }
+			}
+		";
+	}
+
 	private function current_tab() {
+
 		$tabs = array( 'idp', 'login_experience', 'attributes', 'provisioning', 'encryption', 'breakglass', 'plugin_settings', 'help', 'metadata' );
 		$tab  = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'idp';
 		return in_array( $tab, $tabs, true ) ? $tab : 'idp';
@@ -547,9 +592,20 @@ class EDU_SAML_Admin_Page {
 					<p class="description"><?php esc_html_e( 'Be careful to not expose non-public information when using verbose logging, and disable diagnostic logging when it is not needed.', 'edu-saml-sp' ); ?></p>
 				</td>
 			</tr>
+			<tr>
+				<th><?php esc_html_e( 'Unicorn Mode', 'edu-saml-sp' ); ?></th>
+				<td>
+					<label>
+						<input type="checkbox" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[unicorn_mode]" value="1" <?php checked( '1', $opts['unicorn_mode'] ); ?> />
+						<?php esc_html_e( 'Enable Unicorn Mode on this settings page.', 'edu-saml-sp' ); ?>
+					</label>
+					<p class="description"><?php esc_html_e( 'For entertainment purposes only. Save changes to see the magic ✨🦄✨.', 'edu-saml-sp' ); ?></p>
+				</td>
+			</tr>
 		</table>
 		<?php
 	}
+
 
 	private function render_help_tab() {
 		$acs_url   = EDU_SAML_SP::get_acs_url();
