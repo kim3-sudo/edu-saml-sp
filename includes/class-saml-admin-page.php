@@ -560,7 +560,7 @@ class EDU_SAML_Admin_Page {
 		<div class="edu-saml-help">
 
 			<h2><?php esc_html_e( 'Help &amp; Documentation', 'edu-saml-sp' ); ?></h2>
-			<p><?php esc_html_e( 'This page explains what the plugin does, defines common SAML terminology, and walks through configuring several popular Identity Providers (IdPs). It is intended for any organization — educational institution, business, nonprofit, or government agency — configuring single sign-on with a SAML 2.0 IdP.', 'edu-saml-sp' ); ?></p>
+			<p><?php esc_html_e( 'This page explains what the plugin does, defines common SAML terminology, and walks through configuring several popular Identity Providers (IdPs). It is intended for any organization configuring single sign-on with a SAML 2.0 IdP.', 'edu-saml-sp' ); ?></p>
 
 			<h3><?php esc_html_e( 'What this plugin does', 'edu-saml-sp' ); ?></h3>
 			<p><?php esc_html_e( 'This plugin turns your WordPress site into a SAML 2.0 Service Provider (SP). Instead of (or in addition to) logging in with a local WordPress username and password, users can authenticate against your organization\'s Identity Provider (IdP) — such as Okta, Duo, Shibboleth, Microsoft Entra ID, or any other SAML 2.0-compliant IdP — and be automatically signed into WordPress. The plugin can also automatically create WordPress accounts for new users on first login (provisioning) and assign WordPress roles based on group membership asserted by the IdP.', 'edu-saml-sp' ); ?></p>
@@ -583,8 +583,8 @@ class EDU_SAML_Admin_Page {
 				<li><?php esc_html_e( 'Get IdP metadata (a URL or XML file) from your IdP administrator, and use "Auto Populate" on the "IdP Metadata" tab to fill in the Entity ID, SSO URL, SLO URL, and certificate — or enter them manually.', 'edu-saml-sp' ); ?></li>
 				<li><?php esc_html_e( 'Confirm the SAML attribute names on the "Attribute Mapping" tab match what your IdP actually sends (see the IdP-specific guides below).', 'edu-saml-sp' ); ?></li>
 				<li><?php esc_html_e( 'Decide on auto-provisioning, default role, and any group → role mappings on the "Provisioning" tab.', 'edu-saml-sp' ); ?></li>
-				<li><?php esc_html_e( 'Create at least one Break-Glass account before enabling "Force SSO Login", so you always retain a way to sign in if SSO breaks.', 'edu-saml-sp' ); ?></li>
-				<li><?php esc_html_e( 'Test a login using the SP-Initiated Login URL (also on the "SP Metadata" tab) before rolling out to all users.', 'edu-saml-sp' ); ?></li>
+				<li><?php esc_html_e( 'Create at least one Break-Glass account before enabling "Force SSO Login", so you always have a way to sign in if SSO breaks.', 'edu-saml-sp' ); ?></li>
+				<li><?php esc_html_e( 'Try it out! ', 'edu-saml-sp' ); ?></li>
 			</ol>
 
 			<h3><?php esc_html_e( 'SAML glossary', 'edu-saml-sp' ); ?></h3>
@@ -706,9 +706,87 @@ class EDU_SAML_Admin_Page {
 			</details>
 
 			<details class="edu-saml-help-idp">
+				<summary><?php esc_html_e( 'PingIdentity (PingOne / PingFederate)', 'edu-saml-sp' ); ?></summary>
+				<div class="edu-saml-help-idp-body">
+					<p><?php esc_html_e( 'The steps below cover PingOne (Ping\'s cloud SSO service); PingFederate (self-hosted) uses the same concepts under slightly different menu names (e.g. "SP Connection" instead of "Application").', 'edu-saml-sp' ); ?></p>
+					<ol>
+						<li><?php esc_html_e( 'In the PingOne Admin Console, go to Applications → Applications → Add Application → "New SAML Application" (or in PingFederate, go to SP Connections → Create New).', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'Choose to configure the SAML connection manually, then set:', 'edu-saml-sp' ); ?>
+							<ul>
+								<li><?php echo wp_kses_post( sprintf( __( '<strong>ACS URLs</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $acs_url ) . '</code>' ) ); ?></li>
+								<li><?php echo wp_kses_post( sprintf( __( '<strong>Entity ID</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $sp_entity ) . '</code>' ) ); ?></li>
+								<li><?php esc_html_e( '"Signing" and "Assertion validity" can be left at defaults unless your organization\'s security policy specifies otherwise.', 'edu-saml-sp' ); ?></li>
+							</ul>
+						</li>
+						<li><?php esc_html_e( 'Under "Attribute Mapping", map PingOne user directory attributes to outgoing SAML attribute names for email, first name, and last name — and, if needed, a group/role attribute sourced from the user\'s group memberships. Record the exact attribute names for the Attribute Mapping tab.', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'On the application\'s "Configuration" tab, download the "IdP Metadata" file (or copy the metadata URL/Issuer, SSO URL, and signing certificate), then use Auto-Populate on the IdP Metadata tab to import them.', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'Enable the application and assign the appropriate users/groups so they can access it.', 'edu-saml-sp' ); ?></li>
+					</ol>
+				</div>
+			</details>
+
+			<details class="edu-saml-help-idp">
+				<summary><?php esc_html_e( 'OneLogin', 'edu-saml-sp' ); ?></summary>
+				<div class="edu-saml-help-idp-body">
+					<ol>
+						<li><?php esc_html_e( 'In the OneLogin Admin portal, go to Applications → Applications → Add App, and search for "SAML Custom Connector" (choose the "SAML Test Connector (Advanced)" or a similar generic SAML connector).', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'On the "Configuration" tab, set:', 'edu-saml-sp' ); ?>
+							<ul>
+								<li><?php echo wp_kses_post( sprintf( __( '<strong>Audience (Entity ID)</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $sp_entity ) . '</code>' ) ); ?></li>
+								<li><?php echo wp_kses_post( sprintf( __( '<strong>ACS (Consumer) URL</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $acs_url ) . '</code>' ) ); ?></li>
+								<li><?php echo wp_kses_post( sprintf( __( '<strong>ACS (Consumer) URL Validator</strong>: a regex matching %s (e.g. escape the URL and anchor with ^ and $)', 'edu-saml-sp' ), '<code>' . esc_html( $acs_url ) . '</code>' ) ); ?></li>
+							</ul>
+						</li>
+						<li><?php esc_html_e( 'On the "Parameters" tab, add parameters mapping OneLogin user fields to outgoing SAML attribute names for email, first name, and last name, and (optionally) a "Groups"/"Roles" parameter including the user\'s OneLogin roles or group memberships — include it "in SAML assertion".', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'On the "SSO" tab, copy the "Issuer URL" (or download the "SAML Metadata" file) and the X.509 certificate, then use Auto-Populate on the IdP Metadata tab (or enter the values manually) to import them.', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'On the "Access" tab, assign the roles that should be allowed to use this application.', 'edu-saml-sp' ); ?></li>
+					</ol>
+				</div>
+			</details>
+
+			<details class="edu-saml-help-idp">
+				<summary><?php esc_html_e( 'Google Workspace', 'edu-saml-sp' ); ?></summary>
+				<div class="edu-saml-help-idp-body">
+					<ol>
+						<li><?php esc_html_e( 'In the Google Admin console, go to Apps → Web and mobile apps → Add app → "Add custom SAML app".', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'Give the app a name (e.g. this site\'s name), then on the "Google Identity Provider details" screen, download the "IdP metadata" file (or copy the SSO URL, Entity ID, and certificate) — you\'ll import these on the IdP Metadata tab in a later step.', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'On the "Service provider details" screen, set:', 'edu-saml-sp' ); ?>
+							<ul>
+								<li><?php echo wp_kses_post( sprintf( __( '<strong>ACS URL</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $acs_url ) . '</code>' ) ); ?></li>
+								<li><?php echo wp_kses_post( sprintf( __( '<strong>Entity ID</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $sp_entity ) . '</code>' ) ); ?></li>
+								<li><?php esc_html_e( 'Name ID format: EMAIL, and Name ID: Basic Information &gt; Primary email (or whichever format matches the "NameID Format" chosen on the IdP Metadata tab).', 'edu-saml-sp' ); ?></li>
+							</ul>
+						</li>
+						<li><?php esc_html_e( 'On the "Attribute mapping" screen, map Google directory attributes (First name, Last name, Primary email, and optionally an Organizational Unit or Group field) to the outgoing SAML attribute names you plan to use — record these names for the Attribute Mapping tab. Google Workspace does not send group membership by default; if you need group-based roles, add a custom attribute or use Google Groups with an additional attribute mapping app setting, or manage role mapping via Organizational Units mapped to a custom attribute.', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'Finish creating the app, then turn its SSO status ON for the appropriate Organizational Units/Groups so those users can authenticate.', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'Use Auto-Populate on the IdP Metadata tab with the metadata file/URL from step 2 to import the IdP Entity ID, SSO URL, and certificate.', 'edu-saml-sp' ); ?></li>
+					</ol>
+				</div>
+			</details>
+
+			<details class="edu-saml-help-idp">
+				<summary><?php esc_html_e( 'Active Directory Federation Services (ADFS)', 'edu-saml-sp' ); ?></summary>
+				<div class="edu-saml-help-idp-body">
+					<ol>
+						<li><?php esc_html_e( 'In the AD FS Management console, right-click "Relying Party Trusts" and choose "Add Relying Party Trust", then select "Claims aware" and "Enter data about the relying party manually".', 'edu-saml-sp' ); ?></li>
+						<li><?php echo wp_kses_post( sprintf( __( 'Set the <strong>Relying party identifier</strong> to %s.', 'edu-saml-sp' ), '<code>' . esc_html( $sp_entity ) . '</code>' ) ); ?></li>
+						<li><?php esc_html_e( 'Configure the SAML 2.0 SSO endpoint:', 'edu-saml-sp' ); ?>
+							<ul>
+								<li><?php echo wp_kses_post( sprintf( __( '<strong>SAML 2.0 WebSSO protocol URL (ACS URL)</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $acs_url ) . '</code>' ) ); ?></li>
+							</ul>
+						</li>
+						<li><?php esc_html_e( 'Finish the wizard, then right-click the new relying party trust and choose "Edit Claim Issuance Policy" to add claim rules ("Send LDAP Attributes as Claims") mapping Active Directory attributes (E-Mail-Addresses, Given-Name, Surname, and Token-Groups or a custom group attribute) to outgoing claim types — record the exact outgoing claim type URIs/names for the Attribute Mapping tab.', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'Ensure the relying party trust\'s NameID claim rule matches the "NameID Format" chosen on the IdP Metadata tab (commonly Email Address, via a "Transform an Incoming Claim" rule from E-Mail-Address to Name ID).', 'edu-saml-sp' ); ?></li>
+						<li><?php echo wp_kses_post( sprintf( __( 'Retrieve the AD FS federation metadata (typically at a URL such as %s) or export the token-signing certificate, then use Auto-Populate on the IdP Metadata tab to import the Entity ID, SSO URL, and certificate.', 'edu-saml-sp' ), '<code>https://adfs.example.com/federationmetadata/2007-06/federationmetadata.xml</code>' ) ); ?></li>
+						<li><?php esc_html_e( 'Adjust the relying party trust\'s Access Control Policy to permit the appropriate users/groups.', 'edu-saml-sp' ); ?></li>
+					</ol>
+				</div>
+			</details>
+
+			<details class="edu-saml-help-idp">
 				<summary><?php esc_html_e( 'Other / Generic SAML 2.0 IdPs', 'edu-saml-sp' ); ?></summary>
 				<div class="edu-saml-help-idp-body">
-					<p><?php esc_html_e( 'This plugin works with any standards-compliant SAML 2.0 Identity Provider — including PingFederate/PingOne, OneLogin, JumpCloud, Google Workspace, ADFS, Keycloak, and many others. Regardless of the specific product, you will generally need to:', 'edu-saml-sp' ); ?></p>
+					<p><?php esc_html_e( 'This plugin works with any standards-compliant SAML 2.0 Identity Provider — including those not covered by a dedicated guide above, such as JumpCloud, Keycloak, Auth0, or a custom-built IdP. Regardless of the specific product, you will generally need to:', 'edu-saml-sp' ); ?></p>
 					<ol>
 						<li><?php echo wp_kses_post( sprintf( __( 'Register this site as an SP/application using the SP Entity ID (%s) and ACS URL (%s) from the SP Metadata tab.', 'edu-saml-sp' ), '<code>' . esc_html( $sp_entity ) . '</code>', '<code>' . esc_html( $acs_url ) . '</code>' ) ); ?></li>
 						<li><?php esc_html_e( 'Configure which user attributes are sent in the assertion (email, first name, last name, and optionally group/role membership), and note the exact attribute names used.', 'edu-saml-sp' ); ?></li>
