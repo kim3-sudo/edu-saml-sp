@@ -136,6 +136,32 @@ class EDU_SAML_Admin_Page {
 		";
 	}
 
+
+	private function current_tab() {
+
+		$tabs = array( 'idp', 'login_experience', 'attributes', 'provisioning', 'encryption', 'breakglass', 'plugin_settings', 'help', 'metadata' );
+		$tab  = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'idp';
+		return in_array( $tab, $tabs, true ) ? $tab : 'idp';
+	}
+
+
+
+	public function render_page() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		$settings = EDU_SAML_Settings::instance();
+		$opts     = $settings->get_options();
+		$tab      = $this->current_tab();
+
+		$this->render_notices();
+		?>
+		<div class="wrap edu-saml-sp-wrap">
+			<h1><?php esc_html_e( 'SAML SP Settings', 'edu-saml-sp' ); ?></h1>
+
+			<?php if ( edu_saml_sp_library_missing() ) : ?>
+				<div class="notice notice-warning"><p>
 					<?php esc_html_e( 'The onelogin/php-saml library is not installed yet (run composer install in the plugin directory). Settings can still be configured below.', 'edu-saml-sp' ); ?>
 				</p></div>
 			<?php endif; ?>
