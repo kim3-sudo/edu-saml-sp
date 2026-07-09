@@ -80,6 +80,15 @@ class EDU_SAML_Admin_Page {
 	 * @return string
 	 */
 	private function unicorn_mode_css() {
+		// NOTE: input/textarea/select values are intentionally excluded from
+		// the font-family + rainbow text-fill rules below. Applying
+		// `-webkit-text-fill-color: transparent` to form controls makes
+		// their *value* text invisible (while still being present/saved
+		// under the hood) since form controls render their value as
+		// foreground text, not via background-clip. This previously made
+		// it look like saved settings (IdP URLs, certs, etc.) had
+		// disappeared. Form fields still get the Comic Sans font for fun,
+		// just not the transparent rainbow fill.
 		return "
 			.edu-saml-sp-wrap, .edu-saml-sp-wrap * {
 				font-family: 'Comic Sans MS', 'Comic Sans', cursive !important;
@@ -104,6 +113,22 @@ class EDU_SAML_Admin_Page {
 				color: transparent;
 				animation: edu-saml-unicorn-rainbow 6s linear infinite;
 			}
+			.edu-saml-sp-wrap input,
+			.edu-saml-sp-wrap textarea,
+			.edu-saml-sp-wrap select,
+			.edu-saml-sp-wrap button,
+			.edu-saml-sp-wrap code {
+				background-image: none !important;
+				-webkit-background-clip: initial !important;
+				background-clip: initial !important;
+				-webkit-text-fill-color: initial !important;
+				animation: none !important;
+			}
+			.edu-saml-sp-wrap input,
+			.edu-saml-sp-wrap textarea,
+			.edu-saml-sp-wrap select {
+				color: #1d2327 !important;
+			}
 			@keyframes edu-saml-unicorn-rainbow {
 				0% { background-position: 0% 50%; }
 				100% { background-position: 400% 50%; }
@@ -111,31 +136,6 @@ class EDU_SAML_Admin_Page {
 		";
 	}
 
-	private function current_tab() {
-
-		$tabs = array( 'idp', 'login_experience', 'attributes', 'provisioning', 'encryption', 'breakglass', 'plugin_settings', 'help', 'metadata' );
-		$tab  = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'idp';
-		return in_array( $tab, $tabs, true ) ? $tab : 'idp';
-	}
-
-
-
-	public function render_page() {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return;
-		}
-
-		$settings = EDU_SAML_Settings::instance();
-		$opts     = $settings->get_options();
-		$tab      = $this->current_tab();
-
-		$this->render_notices();
-		?>
-		<div class="wrap edu-saml-sp-wrap">
-			<h1><?php esc_html_e( 'SAML SP Settings', 'edu-saml-sp' ); ?></h1>
-
-			<?php if ( edu_saml_sp_library_missing() ) : ?>
-				<div class="notice notice-warning"><p>
 					<?php esc_html_e( 'The onelogin/php-saml library is not installed yet (run composer install in the plugin directory). Settings can still be configured below.', 'edu-saml-sp' ); ?>
 				</p></div>
 			<?php endif; ?>
