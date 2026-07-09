@@ -218,9 +218,33 @@ class EDU_SAML_Provisioning {
 	}
 
 	/**
+	 * Whether group -> role mapping is actually configured and usable.
+	 *
+	 * Both the "Groups Attribute" (Attribute Mapping tab) and at least one
+	 * "Group to Role Mapping" line (Provisioning tab) must be present. If
+	 * either is left blank, group-based role sync is considered disabled,
+	 * so we never overwrite a user's role based on incomplete configuration.
+	 *
+	 * @return bool
+	 */
+	private static function group_mapping_configured() {
+		$settings   = EDU_SAML_Settings::instance();
+		$attr_group = trim( (string) $settings->get( 'attr_groups', '' ) );
+
+		if ( '' === $attr_group ) {
+			return false;
+		}
+
+		$map = $settings->get_group_role_map();
+		return ! empty( $map );
+	}
+
+	/**
 	 * Determine the WP role to assign based on the group memberships and
 	 * the configured group -> role mapping. First match (in configured
-	 * order) wins; falls back to the configured default role.
+	 * order) wins; falls back to the configured default role (this
+	 * fallback also covers the case where the IdP sends no groups, or none
+	 * of the sent groups match a configured mapping line).
 	 *
 	 * @param array $groups
 	 * @return string
@@ -285,13 +309,29 @@ class EDU_SAML_Provisioning {
 			}
 		}
 
-		// Re-sync role on every login, as configured.
-		$role = self::resolve_role( $groups );
+		// Re-sync role on every login, but ONLY if group -> role mapping is
+		// actually configured (non-blank Groups Attribute AND at least one
+		// Group to Role Mapping line). If either is left blank, leave the
+		// user's existing role alone -- an admin may have manually changed
+		// it since the account was provisioned, and we must not clobber
+		// that when there's no real mapping configuration driving role sync.
 		$fresh_user = get_user_by( 'id', $user->ID );
-		if ( $fresh_user && ! in_array( $role, (array) $fresh_user->roles, true ) ) {
-			$fresh_user->set_role( $role );
+
+		if ( self::group_mapping_configured() ) {
+			// Mapping is configured: resolve role from groups every login.
+			// If the IdP happens to send no groups (or none match), this
+			// still safely falls back to the configured default role.
+			$role = self::resolve_role( $groups );
+			if ( $fresh_user && ! in_array( $role, (array) $fresh_user->roles, true ) ) {
+				$fresh_user->set_role( $role );
+			}
 		} elseif ( $fresh_user && empty( $fresh_user->roles ) ) {
-			$fresh_user->set_role( $role );
+			// Mapping not configured, but the account somehow has no role
+			// at all -- assign the default role as a safety net so the
+			// account isn't left completely broken.
+			$fresh_user->set_role( self::resolve_role( $groups ) );
+		} else {
+			self::log_verbose( 'Role sync skipped for user #' . $user->ID . ': group mapping not configured (Groups Attribute and/or Group to Role Mapping is blank).' );
 		}
 
 		return get_user_by( 'id', $user->ID );

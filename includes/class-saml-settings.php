@@ -59,7 +59,7 @@ class EDU_SAML_Settings {
 			'attr_email'            => 'email',
 			'attr_first_name'       => 'firstName',
 			'attr_last_name'        => 'lastName',
-			'attr_groups'           => 'groups',
+			'attr_groups'           => '',
 
 			// Provisioning.
 			'auto_provision'        => '1',   // '1' or '0'.
