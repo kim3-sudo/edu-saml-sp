@@ -253,9 +253,10 @@ class EDU_SAML_Admin_Page {
 				echo '<div class="notice notice-warning"><p>' . esc_html__( 'Break-glass account was created, but the one-time credential display already expired.', 'edu-saml-sp' ) . '</p></div>';
 			}
 		}
-		if ( isset( $_GET['edu_saml_bg_error'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			echo '<div class="notice notice-error"><p>' . esc_html( sanitize_text_field( wp_unslash( $_GET['edu_saml_bg_error'] ) ) ) . '</p></div>';
+		if ( isset( $_GET['edu_saml_bg_error'] ) ) {
+			echo '<div class="notice notice-error"><p>' . esc_html( sanitize_text_field( wp_unslash( $_GET['edu_saml_bg_error'] ) ) ) . '</p></div>'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		}
+
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$settings_updated = isset( $_GET['settings-updated'] ) ? sanitize_text_field( wp_unslash( $_GET['settings-updated'] ) ) : '';
 		if ( $settings_updated ) {

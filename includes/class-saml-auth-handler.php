@@ -310,8 +310,9 @@ class EDU_SAML_Auth_Handler {
 		// nonce is not applicable; wp-login.php's own login form handles
 		// the actual authentication/nonce concerns downstream.
 		$request_method = isset( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : '';
-		if ( 'login' === $action && 'POST' === $request_method && isset( $_POST['log'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
-			$attempted_username = sanitize_user( wp_unslash( $_POST['log'] ), true );
+		if ( 'login' === $action && 'POST' === $request_method && isset( $_POST['log'] ) ) {
+			$attempted_username = sanitize_user( wp_unslash( $_POST['log'] ), true ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+
 			if ( EDU_SAML_Breakglass::is_exempt( $attempted_username ) ) {
 				return;
 			}

@@ -8,7 +8,7 @@ Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-A barebones WordPress plugin that turns your WordPress site into a SAML2 Service Provider (SP), authenticating users against an external Identity Provider (IdP) such as Microsoft Entra ID (Azure AD), Okta, Shibboleth, ADFS, or any SAML2-compliant IdP.
+Turn your WordPress site into a SAML2 Service Provider (SP), authenticating users against any SAML2-compliant Identity Provider (IdP).
 
 == Description ==
 
@@ -26,7 +26,6 @@ This plugin uses the [onelogin/php-saml](https://github.com/SAML-Toolkits/php-sa
 * Group → WordPress role mapping (supports core roles and any custom role registered by a theme/plugin), re-synced on every login
 * "Force SSO" mode that redirects `wp-login.php` to the IdP
 * Break-glass accounts: designate specific WordPress usernames as exempt from forced SSO, plus a one-click button to generate a new break-glass administrator account with a random password (shown once)
-* Anti-enumeration: all authentication failures return the same generic error message, regardless of the underlying reason (unknown user, disabled auto-provisioning, invalid assertion, etc.). Detailed reasons are only written to the PHP error log when diagnostic logging is enabled (or `WP_DEBUG` is on).
 
 == Installation ==
 
