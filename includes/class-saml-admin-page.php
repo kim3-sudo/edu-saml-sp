@@ -301,7 +301,7 @@ class EDU_SAML_Admin_Page {
 			<tr>
 				<th><label for="unique_id_attribute"><?php esc_html_e( 'Unique Identifier Attribute', 'edu-saml-sp' ); ?></label></th>
 				<td><input type="text" class="regular-text" id="unique_id_attribute" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[unique_id_attribute]" value="<?php echo esc_attr( $opts['unique_id_attribute'] ); ?>" />
-					<p class="description"><?php esc_html_e( 'The SAML attribute name that carries the immutable unique identifier (e.g. email, eduPersonPrincipalName, uid, or an Entra/Okta object identifier claim). If absent, the NameID value itself is used.', 'edu-saml-sp' ); ?></p></td>
+					<p class="description"><?php esc_html_e( 'The SAML attribute name that carries the immutable unique identifier (e.g. email, GUID, UUID, or an Entra/Okta object identifier claim). If absent, the NameID value itself is used.', 'edu-saml-sp' ); ?></p></td>
 			</tr>
 		</table>
 		<?php
@@ -357,7 +357,7 @@ class EDU_SAML_Admin_Page {
 			<tr>
 				<th><label for="attr_groups"><?php esc_html_e( 'Groups Attribute', 'edu-saml-sp' ); ?></label></th>
 				<td><input type="text" class="regular-text" id="attr_groups" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[attr_groups]" value="<?php echo esc_attr( $opts['attr_groups'] ); ?>" />
-					<p class="description"><?php esc_html_e( 'SAML attribute name carrying group membership (e.g. groups, memberOf, or an OID such as http://schemas.xmlsoap.org/claims/Group). If you are not passing group membership in your IdP assertions, this attribute is ignored and can be left at default.', 'edu-saml-sp' ); ?></p></td>
+					<p class="description"><?php esc_html_e( 'SAML attribute name carrying group membership (e.g. groups, memberOf, or an OID such as http://schemas.xmlsoap.org/claims/Group). If you are not passing group membership in your IdP assertions, this attribute is ignored and should be left blank.', 'edu-saml-sp' ); ?></p></td>
 			</tr>
 		</table>
 		<?php
@@ -404,6 +404,9 @@ class EDU_SAML_Admin_Page {
 				<th><label for="group_role_map"><?php esc_html_e( 'Group → Role Mapping', 'edu-saml-sp' ); ?></label></th>
 				<td>
 					<textarea id="group_role_map" name="<?php echo esc_attr( EDU_SAML_SP_OPTION_KEY ); ?>[group_role_map]" rows="8" class="large-text code" placeholder="IT-Admins = administrator&#10;Faculty = editor&#10;Staff = author"><?php echo esc_textarea( $opts['group_role_map'] ); ?></textarea>
+					<p class="description">
+						<?php esc_html_e( 'If you haven\'t set your groups attribute in the Attribute Mapping tab, leave this blank.', 'edu-saml-sp' ); ?>
+					</p>
 					<p class="description">
 						<?php esc_html_e( 'One mapping per line: Group Value = wp_role. The first matching line (top to bottom) wins; unmatched users get the default role above. Roles must be valid WordPress roles (core roles like Subscriber, Contributor, Author, Editor, Administrator, or any custom role registered by a theme/plugin). Roles are re-synced on every login.', 'edu-saml-sp' ); ?>
 					</p>

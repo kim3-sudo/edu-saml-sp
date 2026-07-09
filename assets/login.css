@@ -39,3 +39,29 @@
 	text-transform: uppercase;
 }
 
+/**
+ * WordPress core prints its own notices (e.g. "You are now logged out.",
+ * password-reset confirmations, or login errors) as a sibling element
+ * (#login_error or .message) sitting between our SSO button/divider block
+ * and the normal username/password form. Because .edu-saml-sso-divider
+ * uses a 1px height with a negatively-offset absolute-positioned label
+ * (to draw a line through the "or" text), the following sibling would
+ * otherwise butt up right against it with no breathing room, making the
+ * button, divider, and notice appear crushed together. Give any such
+ * core notice that follows our markup proper spacing above and below.
+ */
+.edu-saml-sso-wrap + #login_error,
+.edu-saml-sso-wrap + .message,
+.edu-saml-sso-wrap ~ #login_error,
+.edu-saml-sso-wrap ~ .message {
+	margin-top: 20px;
+	margin-bottom: 20px;
+}
+
+/* Guarantee the login form box itself never collapses up against a
+   preceding notice or the SSO block, regardless of notice presence. */
+#loginform {
+	margin-top: 20px;
+}
+
+
