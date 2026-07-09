@@ -171,16 +171,23 @@ class EDU_SAML_Provisioning {
 	 * @return WP_User|null
 	 */
 	private static function find_user_by_unique_id_hash( $hash ) {
+		// This meta key/value lookup is intentional and required to find
+		// the WP user previously linked to a given SAML unique identifier
+		// hash; the hash column is not otherwise indexed by WordPress
+		// core, so the usual "slow meta query" caution does not offer a
+		// simpler alternative here. Result sets are always capped to a
+		// single row via 'number' => 1.
 		$users = get_users(
 			array(
-				'meta_key'   => self::META_UNIQUE_ID_HASH,
-				'meta_value' => $hash,
+				'meta_key'   => self::META_UNIQUE_ID_HASH, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'meta_value' => $hash, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 				'number'     => 1,
 				'fields'     => 'all',
 			)
 		);
 		return ! empty( $users ) ? $users[0] : null;
 	}
+
 
 	/**
 	 * Extract the first value of a named attribute from the OneLogin attributes array.

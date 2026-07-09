@@ -143,9 +143,13 @@ class EDU_SAML_Admin_Page {
 	private function current_tab() {
 
 		$tabs = array( 'idp', 'login_experience', 'attributes', 'provisioning', 'encryption', 'breakglass', 'plugin_settings', 'help', 'metadata' );
-		$tab  = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'idp';
+		// Read-only tab-selection for display routing; no state is changed
+		// and the value is whitelisted against $tabs below, so a nonce is
+		// not applicable here. phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'idp'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		return in_array( $tab, $tabs, true ) ? $tab : 'idp';
 	}
+
 
 
 
@@ -233,7 +237,10 @@ class EDU_SAML_Admin_Page {
 	private function render_notices() {
 		settings_errors( 'edu_saml_sp_group' );
 
-		if ( isset( $_GET['edu_saml_bg_created'] ) ) {
+		// Read-only, single-render notice flags set by our own redirects
+		// (see class-saml-breakglass.php); they don't trigger any state
+		// change here, so a nonce is not applicable.
+		if ( isset( $_GET['edu_saml_bg_created'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$creds = EDU_SAML_Breakglass::consume_pending_credentials();
 
 			if ( $creds ) {
@@ -246,13 +253,16 @@ class EDU_SAML_Admin_Page {
 				echo '<div class="notice notice-warning"><p>' . esc_html__( 'Break-glass account was created, but the one-time credential display already expired.', 'edu-saml-sp' ) . '</p></div>';
 			}
 		}
-		if ( isset( $_GET['edu_saml_bg_error'] ) ) {
+		if ( isset( $_GET['edu_saml_bg_error'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			echo '<div class="notice notice-error"><p>' . esc_html( sanitize_text_field( wp_unslash( $_GET['edu_saml_bg_error'] ) ) ) . '</p></div>';
 		}
-		if ( isset( $_GET['settings-updated'] ) && $_GET['settings-updated'] ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$settings_updated = isset( $_GET['settings-updated'] ) ? sanitize_text_field( wp_unslash( $_GET['settings-updated'] ) ) : '';
+		if ( $settings_updated ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Settings saved.', 'edu-saml-sp' ) . '</p></div>';
 		}
 	}
+
 
 	private function render_idp_tab( $opts ) {
 		?>
@@ -735,8 +745,9 @@ class EDU_SAML_Admin_Page {
 						<li><?php esc_html_e( 'In the Duo Admin Panel, go to Applications → Protect an Application, and search for "Generic Service Provider" (or "Generic SAML Service Provider"), then click "Protect".', 'edu-saml-sp' ); ?></li>
 						<li><?php esc_html_e( 'Under "Service Provider", enter:', 'edu-saml-sp' ); ?>
 							<ul>
-								<li><?php echo wp_kses_post( sprintf( __( '<strong>Entity ID</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $sp_entity ) . '</code>' ) ); ?></li>
-								<li><?php echo wp_kses_post( sprintf( __( '<strong>Assertion Consumer Service (ACS) URL</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $acs_url ) . '</code>' ) ); ?></li>
+								<li><?php echo wp_kses_post( sprintf( /* translators: %s: SP Entity ID value wrapped in <code> tags */ __( '<strong>Entity ID</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $sp_entity ) . '</code>' ) ); ?></li>
+								<li><?php echo wp_kses_post( sprintf( /* translators: %s: ACS URL value wrapped in <code> tags */ __( '<strong>Assertion Consumer Service (ACS) URL</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $acs_url ) . '</code>' ) ); ?></li>
+
 							</ul>
 						</li>
 						<li><?php esc_html_e( 'Configure Duo\'s connection to your upstream directory (Active Directory, Entra ID, etc.) if not already connected, so Duo knows about your users and their attributes/group memberships.', 'edu-saml-sp' ); ?></li>
@@ -762,7 +773,8 @@ class EDU_SAML_Admin_Page {
 					<p><strong><?php esc_html_e( 'Option B: Standalone/direct deployment (no federation)', 'edu-saml-sp' ); ?></strong></p>
 					<ol>
 						<li><?php esc_html_e( 'Send your Shibboleth IdP administrator this site\'s SP metadata XML (from the SP Metadata tab) so they can add it directly to the IdP\'s metadata provider configuration (metadata-providers.xml), instead of relying on a federation aggregate.', 'edu-saml-sp' ); ?></li>
-						<li><?php echo wp_kses_post( sprintf( __( 'Ask them for the IdP\'s own metadata URL (typically something like %s) or an exported metadata XML file, and use Auto-Populate on the IdP Metadata tab to import it.', 'edu-saml-sp' ), '<code>https://idp.example.org/idp/shibboleth</code>' ) ); ?></li>
+						<li><?php echo wp_kses_post( sprintf( /* translators: %s: example IdP metadata URL wrapped in <code> tags */ __( 'Ask them for the IdP\'s own metadata URL (typically something like %s) or an exported metadata XML file, and use Auto-Populate on the IdP Metadata tab to import it.', 'edu-saml-sp' ), '<code>https://idp.example.org/idp/shibboleth</code>' ) ); ?></li>
+
 						<li><?php esc_html_e( 'Have them configure an attribute-release policy in attribute-filter.xml scoped to this SP\'s Entity ID, releasing email, first/last name, and any group/role attribute you plan to use.', 'edu-saml-sp' ); ?></li>
 					</ol>
 
@@ -778,9 +790,10 @@ class EDU_SAML_Admin_Page {
 						<li><?php esc_html_e( 'Open the new application, go to "Single sign-on", and select "SAML".', 'edu-saml-sp' ); ?></li>
 						<li><?php esc_html_e( 'Under "Basic SAML Configuration", set:', 'edu-saml-sp' ); ?>
 							<ul>
-								<li><?php echo wp_kses_post( sprintf( __( '<strong>Identifier (Entity ID)</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $sp_entity ) . '</code>' ) ); ?></li>
-								<li><?php echo wp_kses_post( sprintf( __( '<strong>Reply URL (Assertion Consumer Service URL)</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $acs_url ) . '</code>' ) ); ?></li>
-								<li><?php echo wp_kses_post( sprintf( __( '<strong>Sign on URL</strong> (optional, for IdP-initiated login): %s', 'edu-saml-sp' ), '<code>' . esc_html( $login_url ) . '</code>' ) ); ?></li>
+								<li><?php echo wp_kses_post( sprintf( /* translators: %s: SP Entity ID value wrapped in <code> tags */ __( '<strong>Identifier (Entity ID)</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $sp_entity ) . '</code>' ) ); ?></li>
+								<li><?php echo wp_kses_post( sprintf( /* translators: %s: ACS URL value wrapped in <code> tags */ __( '<strong>Reply URL (Assertion Consumer Service URL)</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $acs_url ) . '</code>' ) ); ?></li>
+								<li><?php echo wp_kses_post( sprintf( /* translators: %s: SP-initiated login URL value wrapped in <code> tags */ __( '<strong>Sign on URL</strong> (optional, for IdP-initiated login): %s', 'edu-saml-sp' ), '<code>' . esc_html( $login_url ) . '</code>' ) ); ?></li>
+
 							</ul>
 						</li>
 						<li><?php esc_html_e( 'Under "Attributes & Claims", edit the claims to include email, first name (givenname), last name (surname), and, if using group-based roles, add a "Groups" claim (choose "Security groups" or the appropriate group type) — record the claim names for the Attribute Mapping tab. Entra often sends group claims as long GUIDs unless you configure a friendlier group claim format.', 'edu-saml-sp' ); ?></li>
@@ -798,9 +811,10 @@ class EDU_SAML_Admin_Page {
 						<li><?php esc_html_e( 'In the PingOne Admin Console, go to Applications → Applications → Add Application → "New SAML Application" (or in PingFederate, go to SP Connections → Create New).', 'edu-saml-sp' ); ?></li>
 						<li><?php esc_html_e( 'Choose to configure the SAML connection manually, then set:', 'edu-saml-sp' ); ?>
 							<ul>
-								<li><?php echo wp_kses_post( sprintf( __( '<strong>ACS URLs</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $acs_url ) . '</code>' ) ); ?></li>
-								<li><?php echo wp_kses_post( sprintf( __( '<strong>Entity ID</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $sp_entity ) . '</code>' ) ); ?></li>
+								<li><?php echo wp_kses_post( sprintf( /* translators: %s: ACS URL value wrapped in <code> tags */ __( '<strong>ACS URLs</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $acs_url ) . '</code>' ) ); ?></li>
+								<li><?php echo wp_kses_post( sprintf( /* translators: %s: SP Entity ID value wrapped in <code> tags */ __( '<strong>Entity ID</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $sp_entity ) . '</code>' ) ); ?></li>
 								<li><?php esc_html_e( '"Signing" and "Assertion validity" can be left at defaults unless your organization\'s security policy specifies otherwise.', 'edu-saml-sp' ); ?></li>
+
 							</ul>
 						</li>
 						<li><?php esc_html_e( 'Under "Attribute Mapping", map PingOne user directory attributes to outgoing SAML attribute names for email, first name, and last name — and, if needed, a group/role attribute sourced from the user\'s group memberships. Record the exact attribute names for the Attribute Mapping tab.', 'edu-saml-sp' ); ?></li>
@@ -817,9 +831,10 @@ class EDU_SAML_Admin_Page {
 						<li><?php esc_html_e( 'In the OneLogin Admin portal, go to Applications → Applications → Add App, and search for "SAML Custom Connector" (choose the "SAML Test Connector (Advanced)" or a similar generic SAML connector).', 'edu-saml-sp' ); ?></li>
 						<li><?php esc_html_e( 'On the "Configuration" tab, set:', 'edu-saml-sp' ); ?>
 							<ul>
-								<li><?php echo wp_kses_post( sprintf( __( '<strong>Audience (Entity ID)</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $sp_entity ) . '</code>' ) ); ?></li>
-								<li><?php echo wp_kses_post( sprintf( __( '<strong>ACS (Consumer) URL</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $acs_url ) . '</code>' ) ); ?></li>
-								<li><?php echo wp_kses_post( sprintf( __( '<strong>ACS (Consumer) URL Validator</strong>: a regex matching %s (e.g. escape the URL and anchor with ^ and $)', 'edu-saml-sp' ), '<code>' . esc_html( $acs_url ) . '</code>' ) ); ?></li>
+								<li><?php echo wp_kses_post( sprintf( /* translators: %s: SP Entity ID value wrapped in <code> tags */ __( '<strong>Audience (Entity ID)</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $sp_entity ) . '</code>' ) ); ?></li>
+								<li><?php echo wp_kses_post( sprintf( /* translators: %s: ACS URL value wrapped in <code> tags */ __( '<strong>ACS (Consumer) URL</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $acs_url ) . '</code>' ) ); ?></li>
+								<li><?php echo wp_kses_post( sprintf( /* translators: %s: ACS URL value wrapped in <code> tags, used inside a regex example */ __( '<strong>ACS (Consumer) URL Validator</strong>: a regex matching %s (e.g. escape the URL and anchor with ^ and $)', 'edu-saml-sp' ), '<code>' . esc_html( $acs_url ) . '</code>' ) ); ?></li>
+
 							</ul>
 						</li>
 						<li><?php esc_html_e( 'On the "Parameters" tab, add parameters mapping OneLogin user fields to outgoing SAML attribute names for email, first name, and last name, and (optionally) a "Groups"/"Roles" parameter including the user\'s OneLogin roles or group memberships — include it "in SAML assertion".', 'edu-saml-sp' ); ?></li>
@@ -837,9 +852,10 @@ class EDU_SAML_Admin_Page {
 						<li><?php esc_html_e( 'Give the app a name (e.g. this site\'s name), then on the "Google Identity Provider details" screen, download the "IdP metadata" file (or copy the SSO URL, Entity ID, and certificate) — you\'ll import these on the IdP Metadata tab in a later step.', 'edu-saml-sp' ); ?></li>
 						<li><?php esc_html_e( 'On the "Service provider details" screen, set:', 'edu-saml-sp' ); ?>
 							<ul>
-								<li><?php echo wp_kses_post( sprintf( __( '<strong>ACS URL</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $acs_url ) . '</code>' ) ); ?></li>
-								<li><?php echo wp_kses_post( sprintf( __( '<strong>Entity ID</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $sp_entity ) . '</code>' ) ); ?></li>
+								<li><?php echo wp_kses_post( sprintf( /* translators: %s: ACS URL value wrapped in <code> tags */ __( '<strong>ACS URL</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $acs_url ) . '</code>' ) ); ?></li>
+								<li><?php echo wp_kses_post( sprintf( /* translators: %s: SP Entity ID value wrapped in <code> tags */ __( '<strong>Entity ID</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $sp_entity ) . '</code>' ) ); ?></li>
 								<li><?php esc_html_e( 'Name ID format: EMAIL, and Name ID: Basic Information &gt; Primary email (or whichever format matches the "NameID Format" chosen on the IdP Metadata tab).', 'edu-saml-sp' ); ?></li>
+
 							</ul>
 						</li>
 						<li><?php esc_html_e( 'On the "Attribute mapping" screen, map Google directory attributes (First name, Last name, Primary email, and optionally an Organizational Unit or Group field) to the outgoing SAML attribute names you plan to use — record these names for the Attribute Mapping tab. Google Workspace does not send group membership by default; if you need group-based roles, add a custom attribute or use Google Groups with an additional attribute mapping app setting, or manage role mapping via Organizational Units mapped to a custom attribute.', 'edu-saml-sp' ); ?></li>
@@ -854,15 +870,17 @@ class EDU_SAML_Admin_Page {
 				<div class="edu-saml-help-idp-body">
 					<ol>
 						<li><?php esc_html_e( 'In the AD FS Management console, right-click "Relying Party Trusts" and choose "Add Relying Party Trust", then select "Claims aware" and "Enter data about the relying party manually".', 'edu-saml-sp' ); ?></li>
-						<li><?php echo wp_kses_post( sprintf( __( 'Set the <strong>Relying party identifier</strong> to %s.', 'edu-saml-sp' ), '<code>' . esc_html( $sp_entity ) . '</code>' ) ); ?></li>
+						<li><?php echo wp_kses_post( sprintf( /* translators: %s: SP Entity ID value wrapped in <code> tags */ __( 'Set the <strong>Relying party identifier</strong> to %s.', 'edu-saml-sp' ), '<code>' . esc_html( $sp_entity ) . '</code>' ) ); ?></li>
 						<li><?php esc_html_e( 'Configure the SAML 2.0 SSO endpoint:', 'edu-saml-sp' ); ?>
 							<ul>
-								<li><?php echo wp_kses_post( sprintf( __( '<strong>SAML 2.0 WebSSO protocol URL (ACS URL)</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $acs_url ) . '</code>' ) ); ?></li>
+								<li><?php echo wp_kses_post( sprintf( /* translators: %s: ACS URL value wrapped in <code> tags */ __( '<strong>SAML 2.0 WebSSO protocol URL (ACS URL)</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $acs_url ) . '</code>' ) ); ?></li>
+
 							</ul>
 						</li>
 						<li><?php esc_html_e( 'Finish the wizard, then right-click the new relying party trust and choose "Edit Claim Issuance Policy" to add claim rules ("Send LDAP Attributes as Claims") mapping Active Directory attributes (E-Mail-Addresses, Given-Name, Surname, and Token-Groups or a custom group attribute) to outgoing claim types — record the exact outgoing claim type URIs/names for the Attribute Mapping tab.', 'edu-saml-sp' ); ?></li>
 						<li><?php esc_html_e( 'Ensure the relying party trust\'s NameID claim rule matches the "NameID Format" chosen on the IdP Metadata tab (commonly Email Address, via a "Transform an Incoming Claim" rule from E-Mail-Address to Name ID).', 'edu-saml-sp' ); ?></li>
-						<li><?php echo wp_kses_post( sprintf( __( 'Retrieve the AD FS federation metadata (typically at a URL such as %s) or export the token-signing certificate, then use Auto-Populate on the IdP Metadata tab to import the Entity ID, SSO URL, and certificate.', 'edu-saml-sp' ), '<code>https://adfs.example.com/federationmetadata/2007-06/federationmetadata.xml</code>' ) ); ?></li>
+						<li><?php echo wp_kses_post( sprintf( /* translators: %s: example AD FS federation metadata URL wrapped in <code> tags */ __( 'Retrieve the AD FS federation metadata (typically at a URL such as %s) or export the token-signing certificate, then use Auto-Populate on the IdP Metadata tab to import the Entity ID, SSO URL, and certificate.', 'edu-saml-sp' ), '<code>https://adfs.example.com/federationmetadata/2007-06/federationmetadata.xml</code>' ) ); ?></li>
+
 						<li><?php esc_html_e( 'Adjust the relying party trust\'s Access Control Policy to permit the appropriate users/groups.', 'edu-saml-sp' ); ?></li>
 					</ol>
 				</div>
@@ -873,7 +891,8 @@ class EDU_SAML_Admin_Page {
 				<div class="edu-saml-help-idp-body">
 					<p><?php esc_html_e( 'This plugin works with any standards-compliant SAML 2.0 Identity Provider — including those not covered by a dedicated guide above, such as JumpCloud, Keycloak, Auth0, or a custom-built IdP. Regardless of the specific product, you will generally need to:', 'edu-saml-sp' ); ?></p>
 					<ol>
-						<li><?php echo wp_kses_post( sprintf( __( 'Register this site as an SP/application using the SP Entity ID (%s) and ACS URL (%s) from the SP Metadata tab.', 'edu-saml-sp' ), '<code>' . esc_html( $sp_entity ) . '</code>', '<code>' . esc_html( $acs_url ) . '</code>' ) ); ?></li>
+						<li><?php echo wp_kses_post( sprintf( /* translators: 1: SP Entity ID value wrapped in <code> tags, 2: ACS URL value wrapped in <code> tags */ __( 'Register this site as an SP/application using the SP Entity ID (%1$s) and ACS URL (%2$s) from the SP Metadata tab.', 'edu-saml-sp' ), '<code>' . esc_html( $sp_entity ) . '</code>', '<code>' . esc_html( $acs_url ) . '</code>' ) ); ?></li>
+
 						<li><?php esc_html_e( 'Configure which user attributes are sent in the assertion (email, first name, last name, and optionally group/role membership), and note the exact attribute names used.', 'edu-saml-sp' ); ?></li>
 						<li><?php esc_html_e( 'Obtain the IdP\'s metadata (a URL or XML file) and import it using Auto-Populate on the IdP Metadata tab, or manually copy the IdP Entity ID, SSO URL, SLO URL, and signing certificate.', 'edu-saml-sp' ); ?></li>
 						<li><?php esc_html_e( 'Enter the attribute names from step 2 on the Attribute Mapping tab.', 'edu-saml-sp' ); ?></li>

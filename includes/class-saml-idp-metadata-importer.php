@@ -50,12 +50,17 @@ class EDU_SAML_IdP_Metadata_Importer {
 
 		$xml = '';
 
-		if ( ! empty( $_FILES['metadata_file'] ) && UPLOAD_ERR_NO_FILE !== $_FILES['metadata_file']['error'] ) {
-			$xml = $this->read_uploaded_file( $_FILES['metadata_file'] );
+		// Nonce already verified above via check_ajax_referer(); the file
+		// array itself (error/tmp_name/size) is validated/sanitized in
+		// read_uploaded_file() (is_uploaded_file(), size cap, UPLOAD_ERR_*
+		// checks) rather than treated as raw user text.
+		if ( isset( $_FILES['metadata_file']['error'] ) && UPLOAD_ERR_NO_FILE !== $_FILES['metadata_file']['error'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$xml = $this->read_uploaded_file( $_FILES['metadata_file'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			if ( is_wp_error( $xml ) ) {
 				wp_send_json_error( array( 'message' => $xml->get_error_message() ) );
 			}
 		} elseif ( ! empty( $_POST['metadata_url'] ) ) {
+
 			$url = sanitize_url( wp_unslash( $_POST['metadata_url'] ) );
 			$xml = $this->fetch_remote_xml( $url );
 			if ( is_wp_error( $xml ) ) {

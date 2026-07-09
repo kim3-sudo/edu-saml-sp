@@ -99,12 +99,16 @@ class EDU_SAML_Auth_Handler {
 			wp_die( esc_html__( 'SAML SSO is not fully configured. Please contact your administrator.', 'edu-saml-sp' ) );
 		}
 
-		$redirect_to = isset( $_GET['redirect_to'] ) ? wp_unslash( $_GET['redirect_to'] ) : admin_url();
+		// Read-only redirect target for SP-initiated login; sanitized via
+		// wp_validate_redirect() below (only local URLs are honored), so a
+		// nonce is not applicable to this GET-based entry point.
+		$redirect_to = isset( $_GET['redirect_to'] ) ? sanitize_text_field( wp_unslash( $_GET['redirect_to'] ) ) : admin_url(); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$redirect_to = wp_validate_redirect( $redirect_to, admin_url() );
 
 		try {
 			$auth = EDU_SAML_SP::get_auth();
 			$auth->login( $redirect_to );
+
 		} catch ( \Exception $e ) {
 			wp_die( esc_html__( 'Unable to start SSO login. Please contact your administrator.', 'edu-saml-sp' ) );
 		}
@@ -143,8 +147,14 @@ class EDU_SAML_Auth_Handler {
 
 			$this->log_in_user( $user_or_error );
 
-			$relay_state = isset( $_POST['RelayState'] ) ? wp_unslash( $_POST['RelayState'] ) : '';
+			// RelayState is a SAML protocol field whose authenticity is
+			// established by the SAML response's own signature validation
+			// above (processResponse()/isAuthenticated()), not by a WP
+			// nonce; it is also sanitized and validated as a local redirect
+			// via wp_validate_redirect() below.
+			$relay_state = isset( $_POST['RelayState'] ) ? sanitize_text_field( wp_unslash( $_POST['RelayState'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$redirect_to = $relay_state ? wp_validate_redirect( $relay_state, admin_url() ) : admin_url();
+
 
 			// Avoid redirecting back to the SP metadata/login endpoints in a loop.
 			if ( false !== strpos( $redirect_to, 'admin-post.php' ) ) {
@@ -201,8 +211,13 @@ class EDU_SAML_Auth_Handler {
 		wp_clear_auth_cookie();
 		wp_set_current_user( $user->ID );
 		wp_set_auth_cookie( $user->ID, true );
-		do_action( 'wp_login', $user->user_login, $user );
+		// This intentionally fires WordPress core's own 'wp_login' action
+		// (not a custom/prefixed hook) so other plugins that listen for
+		// normal logins (e.g. wp_signon()) also see SAML-authenticated
+		// logins, matching core's own do_action( 'wp_login', ... ) signature.
+		do_action( 'wp_login', $user->user_login, $user ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 	}
+
 
 	/**
 	 * Log a detailed reason server-side and die with a generic public message.
@@ -237,11 +252,15 @@ class EDU_SAML_Auth_Handler {
 	 * form with no visible feedback to the user or admin testing SSO.
 	 */
 	public function render_saml_error_notice() {
-		if ( ! isset( $_GET['saml_error'] ) ) {
+		// Read-only error message set via our own redirect after a failed
+		// SSO attempt; sanitized below and only ever echoed as escaped
+		// text, so a nonce is not applicable here.
+		if ( ! isset( $_GET['saml_error'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			return;
 		}
 
-		$message = sanitize_text_field( wp_unslash( $_GET['saml_error'] ) );
+		$message = sanitize_text_field( wp_unslash( $_GET['saml_error'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
 		if ( '' === $message ) {
 			return;
 		}
@@ -270,13 +289,15 @@ class EDU_SAML_Auth_Handler {
 		// Allow the break-glass escape hatch query param to render the
 		// normal login form. This does NOT bypass authentication -- it only
 		// bypasses the automatic redirect so the password form is reachable.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_GET['breakglass'] ) && '1' === $_GET['breakglass'] ) {
 			return;
 		}
 
 		// Allow logout, password reset, and registration actions to proceed
-		// normally rather than forcing them through SSO.
-		$action = isset( $_REQUEST['action'] ) ? sanitize_key( wp_unslash( $_REQUEST['action'] ) ) : 'login';
+		// normally rather than forcing them through SSO. Read-only routing
+		// decision; a nonce is not applicable here.
+		$action = isset( $_REQUEST['action'] ) ? sanitize_key( wp_unslash( $_REQUEST['action'] ) ) : 'login'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$exempt_actions = array( 'logout', 'lostpassword', 'retrievepassword', 'resetpass', 'rp', 'register', 'postpass' );
 		if ( in_array( $action, $exempt_actions, true ) ) {
 			return;
@@ -284,15 +305,22 @@ class EDU_SAML_Auth_Handler {
 
 		// If this is a POST login attempt for a break-glass username, allow
 		// it to proceed to normal WP authentication instead of redirecting.
-		if ( 'login' === $action && 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['log'] ) ) {
+		// The username itself is sanitized via sanitize_user() below and
+		// only used to check exemption status (no state change here), so a
+		// nonce is not applicable; wp-login.php's own login form handles
+		// the actual authentication/nonce concerns downstream.
+		$request_method = isset( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : '';
+		if ( 'login' === $action && 'POST' === $request_method && isset( $_POST['log'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$attempted_username = sanitize_user( wp_unslash( $_POST['log'] ), true );
 			if ( EDU_SAML_Breakglass::is_exempt( $attempted_username ) ) {
 				return;
 			}
 		}
 
-		$redirect_to = isset( $_REQUEST['redirect_to'] ) ? wp_unslash( $_REQUEST['redirect_to'] ) : admin_url();
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$redirect_to = isset( $_REQUEST['redirect_to'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['redirect_to'] ) ) : admin_url();
 		$sso_url     = add_query_arg( 'redirect_to', rawurlencode( wp_validate_redirect( $redirect_to, admin_url() ) ), EDU_SAML_SP::get_login_url() );
+
 
 		wp_safe_redirect( $sso_url );
 		exit;
@@ -338,14 +366,16 @@ class EDU_SAML_Auth_Handler {
 		}
 
 		// Only show on the actual login form view (not lost-password,
-		// register, resetpass, logout, etc.).
-		$action = isset( $_REQUEST['action'] ) ? sanitize_key( wp_unslash( $_REQUEST['action'] ) ) : 'login';
+		// register, resetpass, logout, etc.). Read-only routing decision;
+		// a nonce is not applicable here.
+		$action = isset( $_REQUEST['action'] ) ? sanitize_key( wp_unslash( $_REQUEST['action'] ) ) : 'login'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( 'login' !== $action ) {
 			return false;
 		}
 
 		return true;
 	}
+
 
 	/**
 	 * Render a "Sign in with your institutional account" SSO button above
@@ -361,7 +391,10 @@ class EDU_SAML_Auth_Handler {
 			return;
 		}
 
-		$redirect_to = isset( $_REQUEST['redirect_to'] ) ? wp_unslash( $_REQUEST['redirect_to'] ) : admin_url();
+		// Read-only redirect target used to build the SSO button's link;
+		// sanitized and validated as a local redirect below, so a nonce is
+		// not applicable here.
+		$redirect_to = isset( $_REQUEST['redirect_to'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['redirect_to'] ) ) : admin_url(); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$sso_url     = add_query_arg(
 			'redirect_to',
 			rawurlencode( wp_validate_redirect( $redirect_to, admin_url() ) ),
@@ -369,6 +402,7 @@ class EDU_SAML_Auth_Handler {
 		);
 
 		$button_text = EDU_SAML_Settings::instance()->get( 'sso_button_text', __( 'Sign in with your institutional account', 'edu-saml-sp' ) );
+
 		if ( '' === trim( (string) $button_text ) ) {
 			$button_text = __( 'Sign in with your institutional account', 'edu-saml-sp' );
 		}
