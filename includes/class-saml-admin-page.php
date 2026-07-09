@@ -68,7 +68,7 @@ class EDU_SAML_Admin_Page {
 
 
 	private function current_tab() {
-		$tabs = array( 'idp', 'login_experience', 'attributes', 'provisioning', 'encryption', 'breakglass', 'plugin_settings', 'metadata' );
+		$tabs = array( 'idp', 'login_experience', 'attributes', 'provisioning', 'encryption', 'breakglass', 'plugin_settings', 'help', 'metadata' );
 		$tab  = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'idp';
 		return in_array( $tab, $tabs, true ) ? $tab : 'idp';
 	}
@@ -106,6 +106,8 @@ class EDU_SAML_Admin_Page {
 
 			<?php if ( 'metadata' === $tab ) : ?>
 				<?php $this->render_metadata_tab(); ?>
+			<?php elseif ( 'help' === $tab ) : ?>
+				<?php $this->render_help_tab(); ?>
 			<?php elseif ( 'breakglass' === $tab ) : ?>
 				<?php $this->render_breakglass_tab( $opts ); ?>
 			<?php else : ?>
@@ -150,6 +152,7 @@ class EDU_SAML_Admin_Page {
 			'encryption'       => __( 'Assertion Encryption', 'edu-saml-sp' ),
 			'breakglass'       => __( 'Break-Glass', 'edu-saml-sp' ),
 			'plugin_settings'  => __( 'Plugin Settings', 'edu-saml-sp' ),
+			'help'             => __( 'Help', 'edu-saml-sp' ),
 		);
 	}
 
@@ -545,6 +548,187 @@ class EDU_SAML_Admin_Page {
 				</td>
 			</tr>
 		</table>
+		<?php
+	}
+
+	private function render_help_tab() {
+		$acs_url   = EDU_SAML_SP::get_acs_url();
+		$sls_url   = EDU_SAML_SP::get_sls_url();
+		$login_url = EDU_SAML_SP::get_login_url();
+		$sp_entity = EDU_SAML_Settings::instance()->get( 'sp_entity_id', home_url( '/' ) );
+		?>
+		<div class="edu-saml-help">
+
+			<h2><?php esc_html_e( 'Help &amp; Documentation', 'edu-saml-sp' ); ?></h2>
+			<p><?php esc_html_e( 'This page explains what the plugin does, defines common SAML terminology, and walks through configuring several popular Identity Providers (IdPs). It is intended for any organization — educational institution, business, nonprofit, or government agency — configuring single sign-on with a SAML 2.0 IdP.', 'edu-saml-sp' ); ?></p>
+
+			<h3><?php esc_html_e( 'What this plugin does', 'edu-saml-sp' ); ?></h3>
+			<p><?php esc_html_e( 'This plugin turns your WordPress site into a SAML 2.0 Service Provider (SP). Instead of (or in addition to) logging in with a local WordPress username and password, users can authenticate against your organization\'s Identity Provider (IdP) — such as Okta, Duo, Shibboleth, Microsoft Entra ID, or any other SAML 2.0-compliant IdP — and be automatically signed into WordPress. The plugin can also automatically create WordPress accounts for new users on first login (provisioning) and assign WordPress roles based on group membership asserted by the IdP.', 'edu-saml-sp' ); ?></p>
+
+			<h3><?php esc_html_e( 'How the tabs fit together', 'edu-saml-sp' ); ?></h3>
+			<ul class="edu-saml-help-list">
+				<li><strong><?php esc_html_e( 'IdP Metadata', 'edu-saml-sp' ); ?>:</strong> <?php esc_html_e( 'Information about your Identity Provider — its Entity ID, SSO/SLO URLs, and signing certificate. Usually copied from IdP metadata, or auto-populated using the metadata URL/file importer on that tab.', 'edu-saml-sp' ); ?></li>
+				<li><strong><?php esc_html_e( 'SP Metadata', 'edu-saml-sp' ); ?>:</strong> <?php esc_html_e( 'Information about this WordPress site as a Service Provider — the URLs and metadata XML you give to your IdP administrator when registering this site.', 'edu-saml-sp' ); ?></li>
+				<li><strong><?php esc_html_e( 'Login Experience', 'edu-saml-sp' ); ?>:</strong> <?php esc_html_e( 'Optional branding for the SSO button shown on the WordPress login page.', 'edu-saml-sp' ); ?></li>
+				<li><strong><?php esc_html_e( 'Attribute Mapping', 'edu-saml-sp' ); ?>:</strong> <?php esc_html_e( 'Tells the plugin which SAML attribute names carry the user\'s email, first name, last name, and group memberships.', 'edu-saml-sp' ); ?></li>
+				<li><strong><?php esc_html_e( 'Provisioning', 'edu-saml-sp' ); ?>:</strong> <?php esc_html_e( 'Controls whether new WordPress accounts are created automatically, whether SSO is enforced for everyone, the default WordPress role, and group-to-role mapping rules.', 'edu-saml-sp' ); ?></li>
+				<li><strong><?php esc_html_e( 'Assertion Encryption', 'edu-saml-sp' ); ?>:</strong> <?php esc_html_e( 'Optional support for IdPs that encrypt SAML assertions, using an SP certificate/private key pair.', 'edu-saml-sp' ); ?></li>
+				<li><strong><?php esc_html_e( 'Break-Glass', 'edu-saml-sp' ); ?>:</strong> <?php esc_html_e( 'Emergency-access WordPress accounts that remain exempt from forced SSO, so administrators are never locked out if the IdP is unreachable or misconfigured.', 'edu-saml-sp' ); ?></li>
+				<li><strong><?php esc_html_e( 'Plugin Settings', 'edu-saml-sp' ); ?>:</strong> <?php esc_html_e( 'General plugin behavior, including diagnostic logging for troubleshooting.', 'edu-saml-sp' ); ?></li>
+			</ul>
+
+			<h3><?php esc_html_e( 'Quick-start checklist', 'edu-saml-sp' ); ?></h3>
+			<ol class="edu-saml-help-list">
+				<li><?php esc_html_e( 'Give your IdP administrator the values on the "SP Metadata" tab (ACS URL, Entity ID, and SP Metadata XML) to register this site as a Service Provider/application.', 'edu-saml-sp' ); ?></li>
+				<li><?php esc_html_e( 'Get IdP metadata (a URL or XML file) from your IdP administrator, and use "Auto Populate" on the "IdP Metadata" tab to fill in the Entity ID, SSO URL, SLO URL, and certificate — or enter them manually.', 'edu-saml-sp' ); ?></li>
+				<li><?php esc_html_e( 'Confirm the SAML attribute names on the "Attribute Mapping" tab match what your IdP actually sends (see the IdP-specific guides below).', 'edu-saml-sp' ); ?></li>
+				<li><?php esc_html_e( 'Decide on auto-provisioning, default role, and any group → role mappings on the "Provisioning" tab.', 'edu-saml-sp' ); ?></li>
+				<li><?php esc_html_e( 'Create at least one Break-Glass account before enabling "Force SSO Login", so you always retain a way to sign in if SSO breaks.', 'edu-saml-sp' ); ?></li>
+				<li><?php esc_html_e( 'Test a login using the SP-Initiated Login URL (also on the "SP Metadata" tab) before rolling out to all users.', 'edu-saml-sp' ); ?></li>
+			</ol>
+
+			<h3><?php esc_html_e( 'SAML glossary', 'edu-saml-sp' ); ?></h3>
+			<ul class="edu-saml-help-list">
+				<li><strong><?php esc_html_e( 'SP (Service Provider)', 'edu-saml-sp' ); ?>:</strong> <?php esc_html_e( 'The application relying on SSO — in this case, this WordPress site.', 'edu-saml-sp' ); ?></li>
+				<li><strong><?php esc_html_e( 'IdP (Identity Provider)', 'edu-saml-sp' ); ?>:</strong> <?php esc_html_e( 'The system that authenticates users and issues SAML assertions — e.g. Okta, Duo, Shibboleth, or Entra ID.', 'edu-saml-sp' ); ?></li>
+				<li><strong><?php esc_html_e( 'Entity ID', 'edu-saml-sp' ); ?>:</strong> <?php esc_html_e( 'A unique URI identifying an SP or IdP. Must match exactly between what is registered at the IdP and what is configured here.', 'edu-saml-sp' ); ?></li>
+				<li><strong><?php esc_html_e( 'ACS URL (Assertion Consumer Service)', 'edu-saml-sp' ); ?>:</strong> <?php esc_html_e( 'The URL on this site where the IdP sends the SAML Response after a successful login.', 'edu-saml-sp' ); ?></li>
+				<li><strong><?php esc_html_e( 'NameID', 'edu-saml-sp' ); ?>:</strong> <?php esc_html_e( 'The primary subject identifier in a SAML assertion, treated by this plugin as an immutable user identifier.', 'edu-saml-sp' ); ?></li>
+				<li><strong><?php esc_html_e( 'Assertion', 'edu-saml-sp' ); ?>:</strong> <?php esc_html_e( 'The signed (and optionally encrypted) XML statement issued by the IdP asserting who the user is and what attributes/groups they have.', 'edu-saml-sp' ); ?></li>
+				<li><strong><?php esc_html_e( 'SSO / SLO', 'edu-saml-sp' ); ?>:</strong> <?php esc_html_e( 'Single Sign-On (logging in via the IdP) and Single Logout (logging out of both the SP and IdP session).', 'edu-saml-sp' ); ?></li>
+			</ul>
+
+			<h3><?php esc_html_e( 'This site\'s values', 'edu-saml-sp' ); ?></h3>
+			<p class="description"><?php esc_html_e( 'You will need these when configuring your IdP in the guides below.', 'edu-saml-sp' ); ?></p>
+			<table class="form-table" role="presentation">
+				<tr>
+					<th><?php esc_html_e( 'SP Entity ID / Audience URI', 'edu-saml-sp' ); ?></th>
+					<td><code><?php echo esc_html( $sp_entity ); ?></code></td>
+				</tr>
+				<tr>
+					<th><?php esc_html_e( 'ACS URL / Single Sign On URL / Reply URL', 'edu-saml-sp' ); ?></th>
+					<td><code><?php echo esc_html( $acs_url ); ?></code></td>
+				</tr>
+				<tr>
+					<th><?php esc_html_e( 'SLS / Single Logout URL', 'edu-saml-sp' ); ?></th>
+					<td><code><?php echo esc_html( $sls_url ); ?></code></td>
+				</tr>
+				<tr>
+					<th><?php esc_html_e( 'SP-Initiated Login URL', 'edu-saml-sp' ); ?></th>
+					<td><code><?php echo esc_html( $login_url ); ?></code></td>
+				</tr>
+			</table>
+
+			<h3><?php esc_html_e( 'Identity Provider configuration guides', 'edu-saml-sp' ); ?></h3>
+			<p><?php esc_html_e( 'Expand a guide below for step-by-step instructions. Field names vary between IdP product versions — use these as a starting point and consult your IdP\'s current documentation for specifics.', 'edu-saml-sp' ); ?></p>
+
+			<details class="edu-saml-help-idp">
+				<summary><?php esc_html_e( 'Okta', 'edu-saml-sp' ); ?></summary>
+				<div class="edu-saml-help-idp-body">
+					<ol>
+						<li><?php esc_html_e( 'In the Okta Admin Console, go to Applications → Applications → Create App Integration, and choose "SAML 2.0".', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'On the "Configure SAML" step, set:', 'edu-saml-sp' ); ?>
+							<ul>
+								<li><?php echo wp_kses_post( sprintf( /* translators: %s: ACS URL */ __( '<strong>Single sign-on URL</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $acs_url ) . '</code>' ) ); ?></li>
+								<li><?php echo wp_kses_post( sprintf( /* translators: %s: SP entity ID */ __( '<strong>Audience URI (SP Entity ID)</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $sp_entity ) . '</code>' ) ); ?></li>
+								<li><?php esc_html_e( '"Name ID format": Email Address (or whichever format matches the "NameID Format" chosen on the IdP Metadata tab).', 'edu-saml-sp' ); ?></li>
+							</ul>
+						</li>
+						<li><?php esc_html_e( 'Under "Attribute Statements", add attributes for email, first name, and last name (e.g. email, firstName, lastName) mapping to Okta user profile properties.', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'If you need role mapping, add a "Group Attribute Statement" (e.g. named "groups") with a filter matching the Okta groups you want to pass through, and use that same name as the Groups Attribute on the Attribute Mapping tab.', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'After saving, open the application\'s "Sign On" tab and use "View Setup Instructions", or download the "Identity Provider metadata" URL/XML — paste that URL or file into the Auto-Populate box on the IdP Metadata tab.', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'Assign users/groups to the application in Okta so they are permitted to log in.', 'edu-saml-sp' ); ?></li>
+					</ol>
+				</div>
+			</details>
+
+			<details class="edu-saml-help-idp">
+				<summary><?php esc_html_e( 'Duo Single Sign-On', 'edu-saml-sp' ); ?></summary>
+				<div class="edu-saml-help-idp-body">
+					<p><?php esc_html_e( 'Duo Single Sign-On (Duo SSO) acts as a SAML IdP in front of an upstream directory (e.g. Active Directory, Entra ID, Google Workspace, or Duo\'s own directory), adding multi-factor authentication to the login flow.', 'edu-saml-sp' ); ?></p>
+					<ol>
+						<li><?php esc_html_e( 'In the Duo Admin Panel, go to Applications → Protect an Application, and search for "Generic Service Provider" (or "Generic SAML Service Provider"), then click "Protect".', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'Under "Service Provider", enter:', 'edu-saml-sp' ); ?>
+							<ul>
+								<li><?php echo wp_kses_post( sprintf( __( '<strong>Entity ID</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $sp_entity ) . '</code>' ) ); ?></li>
+								<li><?php echo wp_kses_post( sprintf( __( '<strong>Assertion Consumer Service (ACS) URL</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $acs_url ) . '</code>' ) ); ?></li>
+							</ul>
+						</li>
+						<li><?php esc_html_e( 'Configure Duo\'s connection to your upstream directory (Active Directory, Entra ID, etc.) if not already connected, so Duo knows about your users and their attributes/group memberships.', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'Under "Attributes" (sometimes called "Map Attributes"), map the upstream directory attributes to SAML attribute names your users\' email, first name, last name, and group memberships will be sent as — record these names for the Attribute Mapping tab.', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'Download the Duo application\'s metadata XML (or copy its metadata URL, "Single Sign-On URL", and certificate) and paste/enter them via the Auto-Populate box or manually on the IdP Metadata tab.', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'Assign the appropriate users/groups policy to the application so only intended users can authenticate.', 'edu-saml-sp' ); ?></li>
+					</ol>
+				</div>
+			</details>
+
+			<details class="edu-saml-help-idp">
+				<summary><?php esc_html_e( 'Shibboleth', 'edu-saml-sp' ); ?></summary>
+				<div class="edu-saml-help-idp-body">
+					<p><?php esc_html_e( 'Shibboleth is a self-hosted, open-source SAML IdP commonly used both by federations (e.g. InCommon, eduGAIN — common at universities and research institutions) and by standalone organizations (private companies, agencies) that run Shibboleth without joining a federation. Configuration differs slightly depending on which model you use.', 'edu-saml-sp' ); ?></p>
+
+					<p><strong><?php esc_html_e( 'Option A: Federation-based deployment (e.g. InCommon, eduGAIN)', 'edu-saml-sp' ); ?></strong></p>
+					<ol>
+						<li><?php esc_html_e( 'Register this site as a Service Provider with your federation, providing the SP metadata XML (from the SP Metadata tab), the ACS URL, and the SP Entity ID.', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'Work with your Shibboleth IdP administrator to add an attribute-release policy (in attribute-filter.xml) that releases the required attributes (email, first/last name, and optionally group/affiliation data such as eduPersonAffiliation or an isMemberOf attribute) to this SP\'s Entity ID.', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'Once the federation publishes the updated metadata aggregate (or your IdP administrator gives you the IdP\'s metadata URL directly), use Auto-Populate on the IdP Metadata tab to import the IdP\'s Entity ID, SSO URL, and certificate.', 'edu-saml-sp' ); ?></li>
+					</ol>
+
+					<p><strong><?php esc_html_e( 'Option B: Standalone/direct deployment (no federation)', 'edu-saml-sp' ); ?></strong></p>
+					<ol>
+						<li><?php esc_html_e( 'Send your Shibboleth IdP administrator this site\'s SP metadata XML (from the SP Metadata tab) so they can add it directly to the IdP\'s metadata provider configuration (metadata-providers.xml), instead of relying on a federation aggregate.', 'edu-saml-sp' ); ?></li>
+						<li><?php echo wp_kses_post( sprintf( __( 'Ask them for the IdP\'s own metadata URL (typically something like %s) or an exported metadata XML file, and use Auto-Populate on the IdP Metadata tab to import it.', 'edu-saml-sp' ), '<code>https://idp.example.org/idp/shibboleth</code>' ) ); ?></li>
+						<li><?php esc_html_e( 'Have them configure an attribute-release policy in attribute-filter.xml scoped to this SP\'s Entity ID, releasing email, first/last name, and any group/role attribute you plan to use.', 'edu-saml-sp' ); ?></li>
+					</ol>
+
+					<p><?php esc_html_e( 'In both cases, confirm with your Shibboleth administrator which attribute IDs (not necessarily the SAML attribute names) are released — common examples include mail, givenName, sn, eduPersonPrincipalName, and eduPersonAffiliation or isMemberOf for group/role data — and enter the exact released attribute names on the Attribute Mapping tab.', 'edu-saml-sp' ); ?></p>
+				</div>
+			</details>
+
+			<details class="edu-saml-help-idp">
+				<summary><?php esc_html_e( 'Microsoft Entra ID (Azure AD)', 'edu-saml-sp' ); ?></summary>
+				<div class="edu-saml-help-idp-body">
+					<ol>
+						<li><?php esc_html_e( 'In the Microsoft Entra admin center, go to Enterprise Applications → New Application → "Create your own application", and choose "Integrate any other application you don\'t find in the gallery (Non-gallery)".', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'Open the new application, go to "Single sign-on", and select "SAML".', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'Under "Basic SAML Configuration", set:', 'edu-saml-sp' ); ?>
+							<ul>
+								<li><?php echo wp_kses_post( sprintf( __( '<strong>Identifier (Entity ID)</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $sp_entity ) . '</code>' ) ); ?></li>
+								<li><?php echo wp_kses_post( sprintf( __( '<strong>Reply URL (Assertion Consumer Service URL)</strong>: %s', 'edu-saml-sp' ), '<code>' . esc_html( $acs_url ) . '</code>' ) ); ?></li>
+								<li><?php echo wp_kses_post( sprintf( __( '<strong>Sign on URL</strong> (optional, for IdP-initiated login): %s', 'edu-saml-sp' ), '<code>' . esc_html( $login_url ) . '</code>' ) ); ?></li>
+							</ul>
+						</li>
+						<li><?php esc_html_e( 'Under "Attributes & Claims", edit the claims to include email, first name (givenname), last name (surname), and, if using group-based roles, add a "Groups" claim (choose "Security groups" or the appropriate group type) — record the claim names for the Attribute Mapping tab. Entra often sends group claims as long GUIDs unless you configure a friendlier group claim format.', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'Download the "Federation Metadata XML" (or copy the "App Federation Metadata Url") from the "SAML Certificates" section, and use Auto-Populate on the IdP Metadata tab to import the Entity ID, SSO URL, and certificate.', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'Under "Users and groups", assign the users/groups who should be able to sign in to this application.', 'edu-saml-sp' ); ?></li>
+					</ol>
+				</div>
+			</details>
+
+			<details class="edu-saml-help-idp">
+				<summary><?php esc_html_e( 'Other / Generic SAML 2.0 IdPs', 'edu-saml-sp' ); ?></summary>
+				<div class="edu-saml-help-idp-body">
+					<p><?php esc_html_e( 'This plugin works with any standards-compliant SAML 2.0 Identity Provider — including PingFederate/PingOne, OneLogin, JumpCloud, Google Workspace, ADFS, Keycloak, and many others. Regardless of the specific product, you will generally need to:', 'edu-saml-sp' ); ?></p>
+					<ol>
+						<li><?php echo wp_kses_post( sprintf( __( 'Register this site as an SP/application using the SP Entity ID (%s) and ACS URL (%s) from the SP Metadata tab.', 'edu-saml-sp' ), '<code>' . esc_html( $sp_entity ) . '</code>', '<code>' . esc_html( $acs_url ) . '</code>' ) ); ?></li>
+						<li><?php esc_html_e( 'Configure which user attributes are sent in the assertion (email, first name, last name, and optionally group/role membership), and note the exact attribute names used.', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'Obtain the IdP\'s metadata (a URL or XML file) and import it using Auto-Populate on the IdP Metadata tab, or manually copy the IdP Entity ID, SSO URL, SLO URL, and signing certificate.', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'Enter the attribute names from step 2 on the Attribute Mapping tab.', 'edu-saml-sp' ); ?></li>
+						<li><?php esc_html_e( 'Assign the appropriate users/groups access to the application at the IdP.', 'edu-saml-sp' ); ?></li>
+					</ol>
+				</div>
+			</details>
+
+			<h3><?php esc_html_e( 'Troubleshooting', 'edu-saml-sp' ); ?></h3>
+			<ul class="edu-saml-help-list">
+				<li><strong><?php esc_html_e( 'Signature validation errors:', 'edu-saml-sp' ); ?></strong> <?php esc_html_e( 'Confirm the certificate on the IdP Metadata tab exactly matches the current signing certificate at the IdP — certificates are periodically rotated and must be updated here when that happens.', 'edu-saml-sp' ); ?></li>
+				<li><strong><?php esc_html_e( 'Clock skew errors:', 'edu-saml-sp' ); ?></strong> <?php esc_html_e( 'SAML assertions have a limited validity window. Ensure the server\'s system clock is accurate (NTP-synced), as even a few minutes of drift can cause "not yet valid" or "expired" errors.', 'edu-saml-sp' ); ?></li>
+				<li><strong><?php esc_html_e( 'Users can log in but roles/attributes look wrong:', 'edu-saml-sp' ); ?></strong> <?php esc_html_e( 'Double-check that the attribute names on the Attribute Mapping tab exactly match (including case) what the IdP actually sends — a mismatch silently results in a blank value rather than an error.', 'edu-saml-sp' ); ?></li>
+				<li><strong><?php esc_html_e( 'Entity ID mismatch errors:', 'edu-saml-sp' ); ?></strong> <?php esc_html_e( 'The SP Entity ID configured here must exactly match (including trailing slashes and case) the Entity ID/Audience/Identifier registered at the IdP.', 'edu-saml-sp' ); ?></li>
+				<li><strong><?php esc_html_e( 'Need more detail?', 'edu-saml-sp' ); ?></strong> <?php esc_html_e( 'Temporarily enable Diagnostic Logging (Basic or Verbose) on the Plugin Settings tab, reproduce the failed login, then check your PHP error log for details. Remember to disable it again afterward.', 'edu-saml-sp' ); ?></li>
+			</ul>
+
+		</div>
 		<?php
 	}
 

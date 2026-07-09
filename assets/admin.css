@@ -42,3 +42,78 @@
 	color: #00a32a;
 }
 
+.edu-saml-help {
+	max-width: 900px;
+}
+
+.edu-saml-help h3 {
+	margin-top: 2em;
+	padding-bottom: 0.3em;
+	border-bottom: 1px solid #dcdcde;
+}
+
+.edu-saml-help h3:first-of-type {
+	margin-top: 1em;
+}
+
+.edu-saml-help-list {
+	list-style: disc;
+	margin-left: 1.5em;
+}
+
+ol.edu-saml-help-list {
+	list-style: decimal;
+}
+
+.edu-saml-help-list li {
+	margin-bottom: 0.6em;
+	line-height: 1.5;
+}
+
+.edu-saml-help-idp {
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	padding: 0.75em 1.25em;
+	margin-bottom: 1em;
+}
+
+.edu-saml-help-idp summary {
+	cursor: pointer;
+	font-weight: 600;
+	font-size: 1.05em;
+	padding: 0.4em 0;
+}
+
+.edu-saml-help-idp[open] summary {
+	margin-bottom: 0.5em;
+	border-bottom: 1px solid #dcdcde;
+}
+
+.edu-saml-help-idp-body ol,
+.edu-saml-help-idp-body ul {
+	margin-left: 1.5em;
+}
+
+.edu-saml-help-idp-body ol {
+	list-style: decimal;
+}
+
+.edu-saml-help-idp-body ul {
+	list-style: circle;
+	margin-top: 0.4em;
+}
+
+.edu-saml-help-idp-body li {
+	margin-bottom: 0.6em;
+	line-height: 1.5;
+}
+
+.edu-saml-help-idp-body code {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	padding: 1px 5px;
+	border-radius: 3px;
+	word-break: break-all;
+}
+
